@@ -1,0 +1,8 @@
+saveProduct(product: Product) {
+
+  return this.http.post(
+    'http://localhost:8080/api/productos',
+    product
+  );
+
+}
