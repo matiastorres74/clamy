@@ -1,0 +1,45 @@
+<section class="container detail-page">
+  <a routerLink="/productos" class="back-link">&larr; Volver al catálogo</a>
+
+  @if (loading()) {
+    <p class="muted">Cargando producto...</p>
+  } @else if (notFound()) {
+    <p class="muted">No encontramos este producto.</p>
+  } @else if (product(); as p) {
+    <div class="detail-grid">
+      <div class="detail-image card">
+        @if (p.imageUrl) {
+          <img class="product-image" [src]="p.imageUrl" [alt]="p.name" />
+        } @else {
+          <div class="detail-image-placeholder">
+            <span class="eyebrow">CLAMY</span>
+          </div>
+        }
+      </div>
+
+      <div class="detail-info">
+        <span class="eyebrow">{{ categoryLabel(p.category) }}</span>
+        <h1 class="detail-title">{{ p.name }}</h1>
+        <p class="detail-price">{{ p.price | arsCurrency }}</p>
+        <p class="detail-description">{{ p.description }}</p>
+
+        <div class="qty-row">
+          <span class="qty-label">Cantidad</span>
+          <div class="qty-stepper">
+            <button type="button" (click)="decrementQty()" aria-label="Restar">-</button>
+            <span>{{ qty() }}</span>
+            <button type="button" (click)="incrementQty()" aria-label="Sumar">+</button>
+          </div>
+        </div>
+
+        <button class="btn btn-solid detail-add" (click)="addToCart()">
+          {{ added() ? 'Agregado ✓' : 'Agregar al carrito' }}
+        </button>
+
+        <a class="btn" href="https://wa.me/5493415400815" target="_blank" rel="noopener">
+          Consultar por WhatsApp
+        </a>
+      </div>
+    </div>
+  }
+</section>
