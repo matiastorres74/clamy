@@ -1,0 +1,51 @@
+<header class="navbar">
+  <div class="container navbar-inner">
+    <a routerLink="/" class="brand" (click)="closeMenu()">
+      <img class="brand-logo" src="assets/clamy-logo.jpg" alt="Clamy Decohogar Iluminación" />
+      <span class="brand-text">
+        <span class="brand-mark">CLAMY</span>
+        <span class="brand-sub">Decohogar &amp; Iluminación</span>
+      </span>
+    </a>
+
+    <nav class="nav-links" [class.open]="menuOpen()">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">
+        Inicio
+      </a>
+      @for (cat of categories; track cat.id) {
+        <a
+          [routerLink]="['/productos']"
+          [queryParams]="{ category: cat.id }"
+          routerLinkActive="active"
+          (click)="closeMenu()"
+        >
+          {{ cat.label }}
+        </a>
+      }
+      <a routerLink="/productos" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }" (click)="closeMenu()">
+        Todo el catálogo
+      </a>
+    </nav>
+
+    <div class="navbar-actions">
+      <a routerLink="/carrito" class="cart-link" aria-label="Carrito">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 3h2l2.4 12.4a2 2 0 0 0 2 1.6h7.2a2 2 0 0 0 2-1.6L20 8H6" stroke-linecap="round" stroke-linejoin="round" />
+          <circle cx="9.5" cy="20.5" r="1.25" />
+          <circle cx="17.5" cy="20.5" r="1.25" />
+        </svg>
+        @if (cart.count() > 0) {
+          <span class="cart-badge">{{ cart.count() }}</span>
+        }
+      </a>
+
+      @if (auth.isLoggedIn()) {
+        <a routerLink="/admin" class="admin-pill">Admin</a>
+      }
+
+      <button class="menu-toggle" (click)="toggleMenu()" aria-label="Menú">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</header>

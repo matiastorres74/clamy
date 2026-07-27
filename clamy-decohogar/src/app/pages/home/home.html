@@ -1,0 +1,40 @@
+<section class="hero grid-texture">
+  <div class="container hero-inner">
+    <span class="eyebrow">Rosario · Santa Fe · Argentina</span>
+    <h1 class="hero-title">Iluminación &amp; decoración<br />para espacios con carácter</h1>
+    <p class="hero-subtitle">
+      Lámparas, decoración, bazar, cocina y muebles. Mayorista y minorista, con envíos a todo el país.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-solid" routerLink="/productos">Ver catálogo</a>
+      <a class="btn" href="https://wa.me/5493415400815" target="_blank" rel="noopener">Consultar por WhatsApp</a>
+    </div>
+  </div>
+</section>
+
+<section class="container categories-section">
+  <h2 class="section-title">Categorías</h2>
+  <div class="category-grid">
+    @for (cat of categories; track cat.id) {
+      <a class="category-tile card" [routerLink]="['/productos']" [queryParams]="{ category: cat.id }">
+        <span class="category-tile-label">{{ cat.label }}</span>
+      </a>
+    }
+  </div>
+</section>
+
+<section class="container featured-section">
+  <h2 class="section-title">Destacados</h2>
+
+  @if (loading()) {
+    <p class="muted">Cargando productos...</p>
+  } @else if (featured().length === 0) {
+    <p class="muted">Todavía no hay productos cargados.</p>
+  } @else {
+    <div class="product-grid">
+      @for (product of featured(); track product.id) {
+        <app-product-card [product]="product" />
+      }
+    </div>
+  }
+</section>

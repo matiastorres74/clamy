@@ -1,0 +1,60 @@
+<section class="container cart-page">
+  <h1 class="section-title">Tu carrito</h1>
+
+  @if (cart.cartItems().length === 0) {
+    <div class="empty-cart">
+      <p class="muted">Tu carrito está vacío.</p>
+      <a class="btn btn-solid" routerLink="/productos">Ver catálogo</a>
+    </div>
+  } @else {
+    <div class="cart-layout">
+      <ul class="cart-items">
+        @for (item of cart.cartItems(); track item.product.id) {
+          <li class="cart-item card">
+            <a class="cart-item-image" [routerLink]="['/productos', item.product.id]">
+              @if (item.product.imageUrl) {
+                <img class="product-image" [src]="item.product.imageUrl" [alt]="item.product.name" />
+              } @else {
+                <div class="cart-item-placeholder"></div>
+              }
+            </a>
+
+            <div class="cart-item-info">
+              <span class="eyebrow">{{ categoryLabel(item.product.category) }}</span>
+              <a class="cart-item-name" [routerLink]="['/productos', item.product.id]">
+                {{ item.product.name }}
+              </a>
+              <p class="cart-item-unit-price">{{ item.product.price | arsCurrency }} c/u</p>
+            </div>
+
+            <div class="qty-stepper">
+              <button type="button" (click)="decrement(item.product.id, item.qty)" aria-label="Restar">-</button>
+              <span>{{ item.qty }}</span>
+              <button type="button" (click)="increment(item.product.id, item.qty)" aria-label="Sumar">+</button>
+            </div>
+
+            <p class="cart-item-total">{{ item.product.price * item.qty | arsCurrency }}</p>
+
+            <button class="remove-btn" type="button" (click)="remove(item.product.id)" aria-label="Quitar">
+              ✕
+            </button>
+          </li>
+        }
+      </ul>
+
+      <aside class="cart-summary card">
+        <h2 class="summary-title">Resumen</h2>
+        <div class="summary-row">
+          <span>Subtotal</span>
+          <span>{{ cart.subtotal() | arsCurrency }}</span>
+        </div>
+        <p class="muted summary-note">
+          El envío y la forma de pago se coordinan directamente por WhatsApp.
+        </p>
+        <button class="btn btn-solid checkout-btn" (click)="checkoutOnWhatsApp()">
+          Finalizar por WhatsApp
+        </button>
+      </aside>
+    </div>
+  }
+</section>

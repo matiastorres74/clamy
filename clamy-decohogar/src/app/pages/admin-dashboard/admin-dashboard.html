@@ -1,0 +1,112 @@
+<section class="container admin-page">
+  <header class="admin-header">
+    <div>
+      <span class="eyebrow">Panel privado</span>
+      <h1 class="section-title">Administrar productos</h1>
+    </div>
+    <div class="admin-header-actions">
+      <button class="btn btn-solid" (click)="openCreateForm()">Nuevo producto</button>
+      <button class="btn" (click)="logout()">Cerrar sesión</button>
+    </div>
+  </header>
+
+  @if (showForm()) {
+    <div class="form-panel card">
+      <h2 class="form-title">{{ form.id ? 'Editar producto' : 'Nuevo producto' }}</h2>
+
+      <form (ngSubmit)="save()">
+        <div class="form-grid">
+          <div class="field">
+            <label for="name">Nombre</label>
+            <input id="name" name="name" type="text" [(ngModel)]="form.name" required />
+          </div>
+
+          <div class="field">
+            <label for="price">Precio (ARS)</label>
+            <input id="price" name="price" type="number" min="0" step="1" [(ngModel)]="form.price" required />
+          </div>
+
+          <div class="field">
+            <label for="category">Categoría</label>
+            <select id="category" name="category" [(ngModel)]="form.category">
+              @for (cat of categories; track cat.id) {
+                <option [value]="cat.id">{{ cat.label }}</option>
+              }
+            </select>
+          </div>
+
+          <div class="field field-checkbox">
+            <label>
+              <input type="checkbox" name="featured" [(ngModel)]="form.featured" />
+              Destacado en portada
+            </label>
+          </div>
+
+          <div class="field field-full">
+            <label for="description">Descripción</label>
+            <textarea id="description" name="description" rows="3" [(ngModel)]="form.description"></textarea>
+          </div>
+
+          <div class="field field-full">
+            <label for="image">Imagen</label>
+            <input id="image" name="image" type="file" accept="image/*" (change)="onFileSelected($event)" />
+            @if (form.imageUrl && !selectedFile()) {
+              <img class="image-preview product-image" [src]="form.imageUrl" alt="Imagen actual" />
+            }
+          </div>
+        </div>
+
+        @if (error()) {
+          <p class="error-text">{{ error() }}</p>
+        }
+
+        <div class="form-actions">
+          <button class="btn" type="button" (click)="closeForm()">Cancelar</button>
+          <button class="btn btn-solid" type="submit" [disabled]="saving()">
+            {{ saving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  }
+
+  @if (loading()) {
+    <p class="muted">Cargando productos...</p>
+  } @else if (products().length === 0) {
+    <p class="muted">Todavía no cargaste ningún producto.</p>
+  } @else {
+    <div class="table-wrapper card">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>Nombre</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Destacado</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of products(); track product.id) {
+            <tr>
+              <td class="thumb-cell">
+                @if (product.imageUrl) {
+                  <img class="product-image" [src]="product.imageUrl" [alt]="product.name" />
+                }
+              </td>
+              <td>{{ product.name }}</td>
+              <td>{{ categoryLabel(product.category) }}</td>
+              <td>{{ product.price | arsCurrency }}</td>
+              <td>{{ product.featured ? 'Sí' : '—' }}</td>
+              <td class="actions-cell">
+                <button class="link-btn" type="button" (click)="openEditForm(product)">Editar</button>
+                <button class="link-btn danger" type="button" (click)="remove(product)">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>

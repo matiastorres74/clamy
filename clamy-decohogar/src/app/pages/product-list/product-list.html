@@ -1,0 +1,33 @@
+<section class="container list-page">
+  <header class="list-header">
+    <h1 class="section-title">Catálogo</h1>
+
+    <form class="search-form" (ngSubmit)="onSearchSubmit()">
+      <input type="search" placeholder="Buscar productos..." [(ngModel)]="searchTerm" name="search" />
+      <button class="btn" type="submit">Buscar</button>
+    </form>
+  </header>
+
+  <div class="chip-row">
+    <button class="chip" [class.active]="!activeCategory()" (click)="selectCategory(null)">
+      Todas
+    </button>
+    @for (cat of categories; track cat.id) {
+      <button class="chip" [class.active]="activeCategory() === cat.id" (click)="selectCategory(cat.id)">
+        {{ cat.label }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="muted">Cargando productos...</p>
+  } @else if (products().length === 0) {
+    <p class="muted">No se encontraron productos con esos filtros.</p>
+  } @else {
+    <div class="product-grid">
+      @for (product of products(); track product.id) {
+        <app-product-card [product]="product" />
+      }
+    </div>
+  }
+</section>
