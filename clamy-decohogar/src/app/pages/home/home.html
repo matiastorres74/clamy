@@ -1,5 +1,11 @@
-<section class="hero grid-texture">
-  <div class="container hero-inner">
+<section class="hero">
+  <div class="hero-media-stack" aria-hidden="true">
+    @for (slide of heroSlides; track slide; let i = $index) {
+      <div class="hero-slide" [class.active]="i === activeSlide()" [style.background-image]="'url(' + slide + ')'"></div>
+    }
+  </div>
+  <div class="hero-overlay" aria-hidden="true"></div>
+  <div class="hero-content container">
     <span class="eyebrow">Rosario · Santa Fe · Argentina</span>
     <h1 class="hero-title">Iluminación &amp; decoración<br />para espacios con carácter</h1>
     <p class="hero-subtitle">
@@ -10,9 +16,29 @@
       <a class="btn" href="https://wa.me/5493415400815" target="_blank" rel="noopener">Consultar por WhatsApp</a>
     </div>
   </div>
+
+  @if (heroSlides.length > 1) {
+    <div class="hero-dots">
+      @for (slide of heroSlides; track slide; let i = $index) {
+        <button
+          class="hero-dot"
+          [class.active]="i === activeSlide()"
+          (click)="selectSlide(i)"
+          [attr.aria-label]="'Ver imagen ' + (i + 1)"
+        ></button>
+      }
+    </div>
+  }
+
+  <a class="hero-scroll" href="#categorias">
+    <span>Scroll</span>
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 4v16m0 0l-6-6m6 6l6-6" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+  </a>
 </section>
 
-<section class="container categories-section">
+<section id="categorias" class="container categories-section">
   <h2 class="section-title">Categorías</h2>
   <div class="category-grid">
     @for (cat of categories; track cat.id) {
