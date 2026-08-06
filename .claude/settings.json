@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -NoProfile -Command \"Stop-Process -Id 10812 -Force\")"
+    ]
+  }
+}

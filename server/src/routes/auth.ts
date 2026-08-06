@@ -1,11 +1,20 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { prisma } from '../lib/prisma';
 
 export const authRouter = Router();
 
-authRouter.post('/login', async (req, res) => {
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many login attempts. Try again later.' },
+});
+
+authRouter.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body ?? {};
 
   if (typeof username !== 'string' || typeof password !== 'string') {
