@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { isValidCategory } from '../lib/categories';
 import { requireAdmin } from '../middleware/requireAdmin';
@@ -35,6 +36,13 @@ productsRouter.get('/:id', async (req, res) => {
   }
   res.json(product);
 });
+
+// Prisma's update/delete throw P2025 when the row doesn't exist. Any other
+// error (e.g. a DB connection failure) must reach the global error handler
+// as a 500 instead of being reported as a 404.
+function isRecordNotFoundError(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025';
+}
 
 function validateProductBody(body: any) {
   const { name, description, price, category, imageUrl, featured } = body ?? {};
@@ -106,7 +114,8 @@ productsRouter.put('/:id', requireAdmin, async (req, res) => {
       },
     });
     res.json(product);
-  } catch {
+  } catch (err) {
+    if (!isRecordNotFoundError(err)) throw err;
     res.status(404).json({ error: 'Product not found' });
   }
 });
@@ -120,7 +129,8 @@ productsRouter.delete('/:id', requireAdmin, async (req, res) => {
   try {
     await prisma.product.delete({ where: { id } });
     res.status(204).send();
-  } catch {
+  } catch (err) {
+    if (!isRecordNotFoundError(err)) throw err;
     res.status(404).json({ error: 'Product not found' });
   }
 });

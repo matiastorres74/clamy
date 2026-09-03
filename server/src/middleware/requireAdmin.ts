@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { env } from '../lib/env';
 
 export interface AuthedRequest extends Request {
   admin?: { id: number; username: string };
@@ -14,7 +15,7 @@ export function requireAdmin(req: AuthedRequest, res: Response, next: NextFuncti
   }
 
   try {
-    const payload = jwt.verify(token, process.env.JWT_SECRET as string) as {
+    const payload = jwt.verify(token, env.JWT_SECRET) as {
       id: number;
       username: string;
     };
