@@ -2,14 +2,12 @@ services:
   api:
     build: ./server
     restart: unless-stopped
+    # DATABASE_URL/DIRECT_URL (Postgres) and BLOB_READ_WRITE_TOKEN must be
+    # set in server/.env — there's no local file DB or upload volume anymore.
     env_file:
       - ./server/.env
     environment:
-      - DATABASE_URL=file:/app/data/dev.db
       - PORT=3001
-    volumes:
-      - db-data:/app/data
-      - uploads-data:/app/uploads
     expose:
       - "3001"
 
@@ -38,7 +36,3 @@ services:
     depends_on:
       - api
       - web
-
-volumes:
-  db-data:
-  uploads-data:

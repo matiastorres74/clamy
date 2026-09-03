@@ -5,12 +5,18 @@ import {
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
 import express from 'express';
+import helmet from 'helmet';
 import { join } from 'node:path';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
+
+// CSP is left to the app's own build/asset setup rather than helmet's
+// generic default, which is tuned for typical hand-written HTML and can
+// block Angular's hydration/inline styles without page-specific tuning.
+app.use(helmet({ contentSecurityPolicy: false }));
 
 /**
  * Example Express Rest API endpoints can be defined here.

@@ -1,18 +1,11 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import rateLimit from 'express-rate-limit';
 import { prisma } from '../lib/prisma';
+import { env } from '../lib/env';
+import { loginLimiter } from '../middleware/loginLimiter';
 
 export const authRouter = Router();
-
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Too many login attempts. Try again later.' },
-});
 
 authRouter.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body ?? {};
@@ -31,11 +24,9 @@ authRouter.post('/login', loginLimiter, async (req, res) => {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 
-  const token = jwt.sign(
-    { id: admin.id, username: admin.username },
-    process.env.JWT_SECRET as string,
-    { expiresIn: '8h' },
-  );
+  const token = jwt.sign({ id: admin.id, username: admin.username }, env.JWT_SECRET, {
+    expiresIn: '8h',
+  });
 
   res.json({ token, username: admin.username });
 });

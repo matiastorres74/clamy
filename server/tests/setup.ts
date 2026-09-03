@@ -1,22 +1,20 @@
 import { execSync } from 'node:child_process';
 import path from 'node:path';
-import fs from 'node:fs';
 import { afterAll } from 'vitest';
 
-const TEST_DB_PATH = path.join(__dirname, '..', 'prisma', 'test.db');
-
-process.env.DATABASE_URL = `file:${TEST_DB_PATH}`;
-process.env.JWT_SECRET = 'test-secret';
-process.env.CORS_ORIGIN = 'http://localhost:4200';
-
-function removeTestDbFiles() {
-  for (const suffix of ['', '-journal']) {
-    const file = `${TEST_DB_PATH}${suffix}`;
-    if (fs.existsSync(file)) fs.rmSync(file);
-  }
+// Requires a disposable Postgres reachable via TEST_DATABASE_URL, e.g.:
+//   docker run --rm -p 5433:5432 -e POSTGRES_PASSWORD=test postgres:16
+//   TEST_DATABASE_URL="postgresql://postgres:test@localhost:5433/clamy_test"
+if (!process.env.TEST_DATABASE_URL) {
+  throw new Error(
+    'TEST_DATABASE_URL must point at a disposable Postgres database before running tests',
+  );
 }
 
-removeTestDbFiles();
+process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+process.env.DIRECT_URL = process.env.TEST_DATABASE_URL;
+process.env.JWT_SECRET = 'test-secret-at-least-16-chars';
+process.env.CORS_ORIGIN = 'http://localhost:4200';
 
 execSync('npx prisma db push --skip-generate --force-reset', {
   cwd: path.join(__dirname, '..'),
@@ -27,5 +25,4 @@ execSync('npx prisma db push --skip-generate --force-reset', {
 afterAll(async () => {
   const { prisma } = await import('../src/lib/prisma');
   await prisma.$disconnect();
-  removeTestDbFiles();
 });

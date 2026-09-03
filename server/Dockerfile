@@ -13,8 +13,6 @@ COPY tsconfig.json ./
 COPY src ./src
 RUN npx prisma generate && npm run build
 
-RUN mkdir -p /app/data /app/uploads
-
 ENV NODE_ENV=production
 ENV PORT=3001
 EXPOSE 3001
