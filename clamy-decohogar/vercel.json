@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "https://REPLACE-WITH-CLAMY-API-DOMAIN.vercel.app/api/:path*"
+  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "functions": {
+    "api/index.ts": {
+      "includeFiles": "dist/clamy-decohogar/**"
     }
-  ]
+  }
 }

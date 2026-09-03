@@ -6,3 +6,6 @@ prisma/test.db
 prisma/test.db-journal
 uploads/*
 !uploads/.gitkeep
+
+.vercel
+.env*
