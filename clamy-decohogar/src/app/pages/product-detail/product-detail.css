@@ -15,7 +15,7 @@
 
 .detail-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 3rem;
   align-items: start;
 }
@@ -35,8 +35,15 @@
   width: 100%;
   height: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.4rem;
+}
+
+.placeholder-caption {
+  font-size: 0.7rem;
+  color: var(--text-dim);
 }
 
 .detail-title {
@@ -74,8 +81,8 @@
   margin-bottom: 0.75rem;
 }
 
-@media (max-width: 800px) {
+@media (min-width: 801px) {
   .detail-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }

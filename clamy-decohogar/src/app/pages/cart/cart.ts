@@ -1,8 +1,8 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CartService } from '../../core/services/cart';
 import { categoryLabel } from '../../core/models/product.model';
-import { ArsCurrencyPipe } from '../../shared/pipes/ars-currency.pipe';
+import { ArsCurrencyPipe, formatArsCurrency } from '../../shared/pipes/ars-currency.pipe';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -14,8 +14,10 @@ import { environment } from '../../../environments/environment';
 export class Cart {
   protected cart = inject(CartService);
   protected categoryLabel = categoryLabel;
+  protected checkoutStarted = signal(false);
 
   decrement(productId: number, currentQty: number): void {
+    if (currentQty <= 1) return;
     this.cart.updateQty(productId, currentQty - 1);
   }
 
@@ -33,9 +35,9 @@ export class Cart {
 
     const lines = items.map(
       (item) =>
-        `• ${item.qty}x ${item.product.name} — ${this.formatPrice(item.product.price * item.qty)}`,
+        `• ${item.qty}x ${item.product.name} — ${formatArsCurrency(item.product.price * item.qty)}`,
     );
-    const total = this.formatPrice(this.cart.subtotal());
+    const total = formatArsCurrency(this.cart.subtotal());
 
     const message = [
       'Hola! Quiero hacer este pedido desde la web de Clamy:',
@@ -47,13 +49,6 @@ export class Cart {
 
     const url = `https://wa.me/${environment.whatsappNumber}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank', 'noopener');
-  }
-
-  private formatPrice(value: number): string {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      maximumFractionDigits: 0,
-    }).format(value);
+    this.checkoutStarted.set(true);
   }
 }

@@ -18,6 +18,11 @@ services:
     restart: unless-stopped
     environment:
       - PORT=4000
+      # Host header(s) the nginx proxy is allowed to forward, and which
+      # forwarded headers to trust for protocol/host detection behind it.
+      # Update NG_ALLOWED_HOSTS to the real domain when deploying.
+      - NG_ALLOWED_HOSTS=localhost
+      - NG_TRUST_PROXY_HEADERS=x-forwarded-proto,x-forwarded-host
     expose:
       - "4000"
     depends_on:

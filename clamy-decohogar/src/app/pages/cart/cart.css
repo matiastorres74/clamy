@@ -11,7 +11,7 @@
 
 .cart-layout {
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 1fr;
   gap: 2.5rem;
   align-items: start;
 }
@@ -27,15 +27,20 @@
 
 .cart-item {
   display: grid;
-  grid-template-columns: 80px 1fr auto auto auto;
+  grid-template-columns: 60px 1fr;
+  grid-template-areas:
+    'image info'
+    'stepper stepper'
+    'total remove';
   align-items: center;
   gap: 1.25rem;
   padding: 1rem;
 }
 
 .cart-item-image {
-  width: 80px;
-  height: 80px;
+  grid-area: image;
+  width: 60px;
+  height: 60px;
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--bg-elevated);
@@ -50,9 +55,17 @@
 .cart-item-placeholder {
   width: 100%;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cart-item-placeholder .eyebrow {
+  font-size: 0.55rem;
 }
 
 .cart-item-info {
+  grid-area: info;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -69,13 +82,26 @@
   color: var(--text-faint);
 }
 
+.qty-stepper {
+  grid-area: stepper;
+  justify-self: start;
+}
+
 .cart-item-total {
+  grid-area: total;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
 }
 
 .remove-btn {
+  grid-area: remove;
+  justify-self: end;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: none;
   border: none;
   color: var(--text-faint);
@@ -85,6 +111,11 @@
 
 .remove-btn:hover {
   color: var(--text);
+}
+
+.qty-stepper button:disabled {
+  color: var(--text-faint);
+  cursor: not-allowed;
 }
 
 .cart-summary {
@@ -115,40 +146,43 @@
   width: 100%;
 }
 
-@media (max-width: 900px) {
+.checkout-confirmation {
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+@media (min-width: 901px) {
   .cart-layout {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 320px;
   }
 
   .cart-item {
-    grid-template-columns: 60px 1fr;
-    grid-template-areas:
-      'image info'
-      'stepper stepper'
-      'total remove';
+    grid-template-columns: 80px 1fr auto auto auto;
+    grid-template-areas: none;
   }
 
   .cart-item-image {
-    grid-area: image;
-    width: 60px;
-    height: 60px;
+    grid-area: auto;
+    width: 80px;
+    height: 80px;
   }
 
   .cart-item-info {
-    grid-area: info;
+    grid-area: auto;
   }
 
   .qty-stepper {
-    grid-area: stepper;
-    justify-self: start;
+    grid-area: auto;
+    justify-self: auto;
   }
 
   .cart-item-total {
-    grid-area: total;
+    grid-area: auto;
   }
 
   .remove-btn {
-    grid-area: remove;
-    justify-self: end;
+    grid-area: auto;
+    justify-self: auto;
   }
 }

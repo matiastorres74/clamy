@@ -1,19 +1,24 @@
-<a class="product-card card" [routerLink]="['/productos', product().id]">
-  <div class="product-card-image">
-    @if (product().imageUrl) {
-      <img class="product-image" [src]="product().imageUrl" [alt]="product().name" />
-    } @else {
-      <div class="product-image-placeholder">
-        <span class="eyebrow">CLAMY</span>
-      </div>
-    }
-  </div>
+<div class="product-card card">
+  <a class="product-card-link" [routerLink]="['/productos', product().id]">
+    <div class="product-card-image">
+      @if (product().imageUrl) {
+        <img class="product-image" [src]="product().imageUrl" [alt]="product().name" loading="lazy" />
+      } @else {
+        <div class="product-image-placeholder">
+          <span class="eyebrow">CLAMY</span>
+          <span class="placeholder-caption">Foto próximamente</span>
+        </div>
+      }
+    </div>
 
-  <div class="product-card-body">
-    <span class="eyebrow">{{ categoryLabel(product().category) }}</span>
-    <h3 class="product-card-name">{{ product().name }}</h3>
-    <p class="product-card-price">{{ product().price | arsCurrency }}</p>
+    <div class="product-card-body">
+      <span class="eyebrow">{{ categoryLabel(product().category) }}</span>
+      <h3 class="product-card-name">{{ product().name }}</h3>
+      <p class="product-card-price">{{ product().price | arsCurrency }}</p>
+    </div>
+  </a>
 
-    <button class="btn product-card-add" (click)="addToCart($event)">Agregar</button>
-  </div>
-</a>
+  <button class="btn product-card-add" (click)="addToCart()" aria-live="polite">
+    {{ added() ? 'Agregado ✓' : 'Agregar' }}
+  </button>
+</div>

@@ -13,6 +13,7 @@
         } @else {
           <div class="detail-image-placeholder">
             <span class="eyebrow">CLAMY</span>
+            <span class="placeholder-caption">Foto próximamente</span>
           </div>
         }
       </div>
@@ -32,7 +33,7 @@
           </div>
         </div>
 
-        <button class="btn btn-solid detail-add" (click)="addToCart()">
+        <button class="btn btn-solid detail-add" (click)="addToCart()" aria-live="polite">
           {{ added() ? 'Agregado ✓' : 'Agregar al carrito' }}
         </button>
 
