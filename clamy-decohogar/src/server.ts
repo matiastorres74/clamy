@@ -19,16 +19,45 @@ const angularApp = new AngularNodeAppEngine();
 app.use(helmet({ contentSecurityPolicy: false }));
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
- *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Proxies /api/* to the backend (a separate Vercel project). Done here
+ * rather than via vercel.json rewrites — a custom `rewrites` array there
+ * disables Vercel's automatic Angular SSR routing (the whole app then
+ * 404s, since this build has no prerendered index.html to fall back to).
+ * Keeping the proxy in-app means the frontend's own SSR routing is
+ * untouched and vercel.json needs no routing config at all.
  */
+const API_ORIGIN = process.env['API_ORIGIN'] || 'http://localhost:3001';
+
+app.use('/api', async (req, res, next) => {
+  try {
+    const chunks: Buffer[] = [];
+    for await (const chunk of req) chunks.push(chunk as Buffer);
+    const body = chunks.length > 0 ? Buffer.concat(chunks) : undefined;
+
+    const headers: Record<string, string> = {};
+    for (const [key, value] of Object.entries(req.headers)) {
+      if (typeof value === 'string' && !['host', 'connection', 'content-length'].includes(key)) {
+        headers[key] = value;
+      }
+    }
+
+    const upstream = await fetch(`${API_ORIGIN}${req.originalUrl}`, {
+      method: req.method,
+      headers,
+      body: req.method === 'GET' || req.method === 'HEAD' ? undefined : body,
+    });
+
+    res.status(upstream.status);
+    upstream.headers.forEach((value, key) => {
+      if (!['content-encoding', 'transfer-encoding'].includes(key)) {
+        res.setHeader(key, value);
+      }
+    });
+    res.send(Buffer.from(await upstream.arrayBuffer()));
+  } catch (err) {
+    next(err);
+  }
+});
 
 /**
  * Serve static files from /browser
