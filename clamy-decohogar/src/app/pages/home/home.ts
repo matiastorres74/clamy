@@ -1,4 +1,14 @@
-import { Component, OnDestroy, OnInit, PLATFORM_ID, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  PLATFORM_ID,
+  ViewChild,
+  effect,
+  inject,
+  signal,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ProductService } from '../../core/services/product';
@@ -6,6 +16,11 @@ import { ProductCard } from '../../shared/product-card/product-card';
 import { CATEGORIES, Product } from '../../core/models/product.model';
 
 const SLIDE_INTERVAL_MS = 6000;
+
+interface HeroSlide {
+  type: 'image' | 'video';
+  src: string;
+}
 
 @Component({
   selector: 'app-home',
@@ -18,12 +33,36 @@ export class Home implements OnInit, OnDestroy {
   private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private slideTimer?: ReturnType<typeof setInterval>;
 
+  @ViewChild('heroVideo') private heroVideoRef?: ElementRef<HTMLVideoElement>;
+
   protected categories = CATEGORIES;
   protected featured = signal<Product[]>([]);
   protected loading = signal(true);
 
-  protected heroSlides = ['assets/hero-1.jpg', 'assets/hero-2.jpg'];
+  protected heroSlides: HeroSlide[] = [
+    { type: 'image', src: 'assets/hero-3.jpg' },
+    { type: 'video', src: 'assets/hero-4.mp4' },
+  ];
   protected activeSlide = signal(0);
+
+  constructor() {
+    effect(() => {
+      // Read the signal unconditionally first so this effect keeps a
+      // dependency on it even on early runs where the video isn't
+      // rendered yet — otherwise it never re-runs when the slide changes.
+      const activeSlide = this.activeSlide();
+      const video = this.heroVideoRef?.nativeElement;
+      if (!video) return;
+
+      const videoSlideIndex = this.heroSlides.findIndex((s) => s.type === 'video');
+      if (activeSlide === videoSlideIndex) {
+        video.currentTime = 0;
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }
 
   ngOnInit(): void {
     this.productService.getAll().subscribe({
@@ -35,7 +74,10 @@ export class Home implements OnInit, OnDestroy {
       error: () => this.loading.set(false),
     });
 
-    if (this.isBrowser && this.heroSlides.length > 1) {
+    const prefersReducedMotion =
+      this.isBrowser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (this.isBrowser && !prefersReducedMotion && this.heroSlides.length > 1) {
       this.slideTimer = setInterval(() => {
         this.activeSlide.update((i) => (i + 1) % this.heroSlides.length);
       }, SLIDE_INTERVAL_MS);

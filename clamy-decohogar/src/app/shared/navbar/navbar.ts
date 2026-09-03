@@ -23,6 +23,7 @@ export class Navbar {
   protected menuOpen = signal(false);
   protected searchOpen = signal(false);
   protected searchTerm = signal('');
+  protected categoriesOpen = signal(false);
 
   toggleMenu(): void {
     this.menuOpen.update((v) => !v);
@@ -30,6 +31,11 @@ export class Navbar {
 
   closeMenu(): void {
     this.menuOpen.set(false);
+    this.categoriesOpen.set(false);
+  }
+
+  toggleCategories(): void {
+    this.categoriesOpen.update((v) => !v);
   }
 
   toggleSearch(): void {

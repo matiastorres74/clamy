@@ -6,9 +6,13 @@ const formatter = new Intl.NumberFormat('es-AR', {
   maximumFractionDigits: 0,
 });
 
+export function formatArsCurrency(value: number): string {
+  return formatter.format(value);
+}
+
 @Pipe({ name: 'arsCurrency' })
 export class ArsCurrencyPipe implements PipeTransform {
   transform(value: number): string {
-    return formatter.format(value);
+    return formatArsCurrency(value);
   }
 }

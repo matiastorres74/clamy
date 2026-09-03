@@ -9,7 +9,8 @@
   --border-strong: rgba(255, 255, 255, 0.28);
   --text: #f2f2f3;
   --text-dim: #a6a6ac;
-  --text-faint: #6b6b72;
+  --text-faint: #8f8f96;
+  --danger: #ff8080;
   --glow: 0 0 24px rgba(255, 255, 255, 0.12);
   --glow-strong: 0 0 40px rgba(255, 255, 255, 0.22);
   --radius: 2px;
@@ -79,14 +80,6 @@ img {
   max-width: 1200px;
   margin: 0 auto;
   padding-inline: 1.5rem;
-}
-
-.grid-texture {
-  background-image: linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 48px 48px;
-  -webkit-mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 75%);
-  mask-image: radial-gradient(ellipse at 50% 0%, black 0%, transparent 75%);
 }
 
 .eyebrow {
@@ -220,19 +213,19 @@ label {
 
 .product-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: 1fr;
   gap: 1.5rem;
 }
 
-@media (max-width: 1000px) {
+@media (min-width: 561px) {
   .product-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (max-width: 560px) {
+@media (min-width: 1001px) {
   .product-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 

@@ -1,4 +1,5 @@
-import express from 'express';
+import 'express-async-errors';
+import express, { NextFunction, Request, Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import path from 'node:path';
@@ -21,6 +22,14 @@ export function createApp() {
   app.use('/api/upload', uploadRouter);
 
   app.get('/api/health', (_req, res) => res.json({ ok: true }));
+
+  // Catches rejections from async route handlers (forwarded here by
+  // express-async-errors, since Express 4 doesn't do this natively) so a
+  // database hiccup returns a 500 instead of crashing the process.
+  app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
+    console.error(err);
+    res.status(500).json({ error: 'Internal server error' });
+  });
 
   return app;
 }

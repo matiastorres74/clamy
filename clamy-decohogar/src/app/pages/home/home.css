@@ -1,6 +1,6 @@
 .hero {
   position: relative;
-  min-height: 88vh;
+  min-height: 70vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,13 +17,15 @@
 .hero-slide {
   position: absolute;
   inset: 0;
+  width: 100%;
+  height: 100%;
   background-size: cover;
   background-position: center;
+  object-fit: cover;
+  object-position: center;
   opacity: 0;
   transform: scale(1);
   transition: opacity 1.2s ease;
-  /* Grayscale to match the site's monochrome product imagery, per design decision */
-  filter: grayscale(1) contrast(1.05);
 }
 
 .hero-slide.active {
@@ -94,30 +96,40 @@
 }
 
 .hero-dot {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+.hero-dot::after {
+  content: '';
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: transparent;
   border: 1px solid var(--border-strong);
-  padding: 0;
-  cursor: pointer;
   transition: background 0.2s ease, transform 0.2s ease;
 }
 
-.hero-dot:hover {
+.hero-dot:hover::after {
   transform: scale(1.2);
 }
 
-.hero-dot.active {
+.hero-dot.active::after {
   background: var(--text);
 }
 
 .hero-scroll {
+  display: none;
   position: absolute;
   right: 2rem;
   bottom: 2.5rem;
   z-index: 1;
-  display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.75rem;
@@ -138,26 +150,29 @@
 }
 
 .hero-scroll svg {
-  animation: hero-scroll-bounce 2s ease-in-out infinite;
+  animation: hero-scroll-nudge 2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
 }
 
-@keyframes hero-scroll-bounce {
+@keyframes hero-scroll-nudge {
   0%,
+  20% {
+    transform: translateY(0);
+  }
+  60% {
+    transform: translateY(6px);
+  }
   100% {
     transform: translateY(0);
   }
-  50% {
-    transform: translateY(6px);
-  }
 }
 
-@media (max-width: 700px) {
+@media (min-width: 701px) {
   .hero {
-    min-height: 70vh;
+    min-height: 88vh;
   }
 
   .hero-scroll {
-    display: none;
+    display: flex;
   }
 }
 
@@ -168,7 +183,7 @@
 
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.25rem;
 }
 
@@ -177,6 +192,7 @@
   display: flex;
   align-items: flex-end;
   padding: 1.25rem;
+  min-width: 0;
 }
 
 .category-tile-label {
@@ -184,16 +200,17 @@
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  overflow-wrap: break-word;
 }
 
-@media (max-width: 1000px) {
+@media (min-width: 601px) {
   .category-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (max-width: 600px) {
+@media (min-width: 1001px) {
   .category-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(5, 1fr);
   }
 }

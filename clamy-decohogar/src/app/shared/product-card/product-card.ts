@@ -1,4 +1,4 @@
-import { Component, input, inject } from '@angular/core';
+import { Component, input, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Product, categoryLabel } from '../../core/models/product.model';
 import { CartService } from '../../core/services/cart';
@@ -14,10 +14,11 @@ export class ProductCard {
   product = input.required<Product>();
   protected cart = inject(CartService);
   protected categoryLabel = categoryLabel;
+  protected added = signal(false);
 
-  addToCart(event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
+  addToCart(): void {
     this.cart.add(this.product());
+    this.added.set(true);
+    setTimeout(() => this.added.set(false), 2000);
   }
 }

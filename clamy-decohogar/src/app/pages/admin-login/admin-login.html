@@ -22,7 +22,7 @@
       </div>
 
       @if (error()) {
-        <p class="error-text">{{ error() }}</p>
+        <p class="error-text" role="alert">{{ error() }}</p>
       }
 
       <button class="btn btn-solid login-submit" type="submit" [disabled]="loading()">

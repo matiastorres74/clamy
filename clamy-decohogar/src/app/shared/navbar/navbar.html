@@ -40,8 +40,14 @@
         Inicio
       </a>
 
-      <div class="nav-dropdown">
-        <button class="nav-link nav-dropdown-trigger" type="button">
+      <div class="nav-dropdown" [class.open]="categoriesOpen()">
+        <button
+          class="nav-link nav-dropdown-trigger"
+          type="button"
+          (click)="toggleCategories()"
+          aria-haspopup="true"
+          [attr.aria-expanded]="categoriesOpen()"
+        >
           Categorías
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />

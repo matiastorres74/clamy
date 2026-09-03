@@ -13,9 +13,11 @@
           <li class="cart-item card">
             <a class="cart-item-image" [routerLink]="['/productos', item.product.id]">
               @if (item.product.imageUrl) {
-                <img class="product-image" [src]="item.product.imageUrl" [alt]="item.product.name" />
+                <img class="product-image" [src]="item.product.imageUrl" [alt]="item.product.name" loading="lazy" />
               } @else {
-                <div class="cart-item-placeholder"></div>
+                <div class="cart-item-placeholder">
+                  <span class="eyebrow">CLAMY</span>
+                </div>
               }
             </a>
 
@@ -28,7 +30,14 @@
             </div>
 
             <div class="qty-stepper">
-              <button type="button" (click)="decrement(item.product.id, item.qty)" aria-label="Restar">-</button>
+              <button
+                type="button"
+                (click)="decrement(item.product.id, item.qty)"
+                [disabled]="item.qty <= 1"
+                aria-label="Restar"
+              >
+                -
+              </button>
               <span>{{ item.qty }}</span>
               <button type="button" (click)="increment(item.product.id, item.qty)" aria-label="Sumar">+</button>
             </div>
@@ -54,6 +63,12 @@
         <button class="btn btn-solid checkout-btn" (click)="checkoutOnWhatsApp()">
           Finalizar por WhatsApp
         </button>
+
+        @if (checkoutStarted()) {
+          <p class="checkout-confirmation" aria-live="polite">
+            Te llevamos a WhatsApp con tu pedido listo para enviar. Normalmente respondemos en el día.
+          </p>
+        }
       </aside>
     </div>
   }

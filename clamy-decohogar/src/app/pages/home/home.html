@@ -1,7 +1,20 @@
 <section class="hero">
   <div class="hero-media-stack" aria-hidden="true">
-    @for (slide of heroSlides; track slide; let i = $index) {
-      <div class="hero-slide" [class.active]="i === activeSlide()" [style.background-image]="'url(' + slide + ')'"></div>
+    @for (slide of heroSlides; track slide.src; let i = $index) {
+      @if (slide.type === 'video') {
+        <video
+          #heroVideo
+          class="hero-slide"
+          [class.active]="i === activeSlide()"
+          [src]="slide.src"
+          muted
+          loop
+          playsinline
+          preload="metadata"
+        ></video>
+      } @else {
+        <div class="hero-slide" [class.active]="i === activeSlide()" [style.background-image]="'url(' + slide.src + ')'"></div>
+      }
     }
   </div>
   <div class="hero-overlay" aria-hidden="true"></div>
@@ -19,7 +32,7 @@
 
   @if (heroSlides.length > 1) {
     <div class="hero-dots">
-      @for (slide of heroSlides; track slide; let i = $index) {
+      @for (slide of heroSlides; track slide.src; let i = $index) {
         <button
           class="hero-dot"
           [class.active]="i === activeSlide()"
