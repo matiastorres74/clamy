@@ -89,10 +89,10 @@
 }
 
 .brand-mark {
-  font-family: var(--font-display);
+  font-family: "Century Gothic";
   font-size: 1.4rem;
-  font-weight: 800;
-  letter-spacing: 0.18em;
+  font-weight: 900;
+  letter-spacing: 0.16em;
   color: var(--text);
 }
 
