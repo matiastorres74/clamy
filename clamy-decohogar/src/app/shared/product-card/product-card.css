@@ -8,7 +8,6 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
 }
 
 .product-card-link {
@@ -18,7 +17,7 @@
 }
 
 .product-card-image {
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 4 / 5;
   background: var(--bg-elevated);
   overflow: hidden;
 }
@@ -27,10 +26,11 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.6s ease;
 }
 
 .product-card:hover .product-image {
-  filter: grayscale(0.85) contrast(1.1);
+  transform: scale(1.03);
 }
 
 .product-image-placeholder {
@@ -49,35 +49,60 @@
 }
 
 .product-card-body {
-  padding: 1.1rem 1.25rem 0;
+  padding: 1.6rem 0.5rem 0;
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
   flex: 1;
 }
 
 .product-card-name {
-  font-size: 1rem;
-  letter-spacing: 0.02em;
-  line-height: 1.3;
-  min-height: 2.6em;
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  line-height: 1.5;
+  min-height: 3em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.product-card-price {
-  color: var(--text);
-  font-weight: 600;
-  font-size: 1.05rem;
-  margin-top: 0.2rem;
+.product-card-category {
+  font-size: 0.78rem;
+  color: var(--text-dim);
 }
 
+.product-card-price {
+  color: var(--text);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.02em;
+  margin-top: 0.35rem;
+}
+
+/* Understated so it reads as part of the stack rather than a boxed CTA —
+   the reference layout has no button, but this one still has to be
+   reachable on touch, so it stays visible instead of hover-only. */
 .product-card-add {
-  margin: 0.9rem 1.25rem 1.4rem;
   margin-top: auto;
-  padding: 0.6rem 1rem;
+  padding: 0.9rem 0 0.4rem;
+  align-self: center;
+  background: none;
+  border: none;
+  border-radius: 0;
   font-size: 0.7rem;
-  align-self: flex-start;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  color: var(--text-dim);
+}
+
+.product-card-add:hover {
+  background: none;
+  box-shadow: none;
+  color: var(--text);
 }

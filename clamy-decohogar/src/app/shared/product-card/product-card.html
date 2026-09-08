@@ -1,4 +1,4 @@
-<div class="product-card card">
+<div class="product-card">
   <a class="product-card-link" [routerLink]="['/productos', product().id]">
     <div class="product-card-image">
       @if (product().imageUrl) {
@@ -12,8 +12,8 @@
     </div>
 
     <div class="product-card-body">
-      <span class="eyebrow">{{ categoryLabel(product().category) }}</span>
       <h3 class="product-card-name">{{ product().name }}</h3>
+      <span class="product-card-category">{{ categoryLabel(product().category) }}</span>
       <p class="product-card-price">{{ product().price | arsCurrency }}</p>
     </div>
   </a>
