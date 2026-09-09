@@ -22,6 +22,18 @@ execSync('npx prisma db push --skip-generate --force-reset', {
   stdio: 'inherit',
 });
 
+// `db push` syncs the schema but never runs migration SQL, so extensions the
+// queries depend on would be missing here even though production has them.
+// Replaying the migration file keeps the two in step without duplicating it.
+execSync(
+  'npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20260909170000_add_unaccent_extension/migration.sql',
+  {
+    cwd: path.join(__dirname, '..'),
+    env: process.env,
+    stdio: 'inherit',
+  },
+);
+
 afterAll(async () => {
   const { prisma } = await import('../src/lib/prisma');
   await prisma.$disconnect();

@@ -12,6 +12,24 @@ export const productsRouter = Router();
 // unaffected by this parameter being added.
 const MAX_LIMIT = 100;
 
+// Postgres compares text in LIKE literally, so the previous `contains` filter
+// was both case- and accent-sensitive: "aplique" missed "Aplique", and
+// "lampara" missed "Lámpara colgante Nordic". ILIKE handles the case half and
+// unaccent() the accent half, but Prisma's query builder can't express
+// unaccent(), so the matching ids are resolved here and then composed with the
+// caller's other filters. That keeps category/featured/limit/ordering on the
+// regular typed query instead of pushing the whole endpoint into raw SQL.
+async function findIdsMatchingName(term: string): Promise<number[]> {
+  // Wildcards are escaped so a shopper searching for "50%" gets a literal
+  // match rather than a pattern. Backslash is Postgres' default LIKE escape.
+  const escaped = term.replace(/[\\%_]/g, (char) => `\\${char}`);
+  const rows = await prisma.$queryRaw<Array<{ id: number }>>`
+    SELECT id FROM "Product"
+    WHERE unaccent(name) ILIKE '%' || unaccent(${escaped}) || '%'
+  `;
+  return rows.map((row) => row.id);
+}
+
 function parseLimit(raw: unknown): number | undefined {
   if (typeof raw !== 'string' || raw.trim().length === 0) return undefined;
   const parsed = Number(raw);
@@ -27,7 +45,7 @@ productsRouter.get('/', async (req, res) => {
     where.category = category;
   }
   if (typeof search === 'string' && search.trim().length > 0) {
-    where.name = { contains: search.trim() };
+    where.id = { in: await findIdsMatchingName(search.trim()) };
   }
   if (featured === 'true') {
     where.featured = true;
