@@ -83,6 +83,14 @@ app.use(
  */
 const PAGE_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=86400';
 
+// Vercel rewrites `Cache-Control` on framework-rendered responses to its own
+// `max-age=0, must-revalidate`, which is why setting that header alone left
+// every request a cache MISS in production. `Vercel-CDN-Cache-Control` is the
+// channel it does honour: the CDN consumes it and strips it before the browser
+// sees it, so the two headers together give us an edge cache without telling
+// browsers to hold a private copy of the page.
+const CDN_CACHE_CONTROL = 'max-age=600, stale-while-revalidate=86400';
+
 function isCacheablePage(method: string, path: string): boolean {
   return method === 'GET' && !path.startsWith('/admin');
 }
@@ -97,6 +105,7 @@ app.use((req, res, next) => {
       if (!response) return next();
       if (isCacheablePage(req.method, req.path)) {
         response.headers.set('Cache-Control', PAGE_CACHE_CONTROL);
+        response.headers.set('Vercel-CDN-Cache-Control', CDN_CACHE_CONTROL);
       }
       return writeResponseToNodeResponse(response, res);
     })
