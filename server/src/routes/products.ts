@@ -6,8 +6,21 @@ import { requireAdmin } from '../middleware/requireAdmin';
 
 export const productsRouter = Router();
 
+// Ceiling on a single response, so a caller can't accidentally pull the whole
+// catalogue down in one request once it grows. `limit` is opt-in: omitting it
+// keeps the previous "return everything" behaviour, so existing callers are
+// unaffected by this parameter being added.
+const MAX_LIMIT = 100;
+
+function parseLimit(raw: unknown): number | undefined {
+  if (typeof raw !== 'string' || raw.trim().length === 0) return undefined;
+  const parsed = Number(raw);
+  if (!Number.isInteger(parsed) || parsed < 1) return undefined;
+  return Math.min(parsed, MAX_LIMIT);
+}
+
 productsRouter.get('/', async (req, res) => {
-  const { category, search } = req.query;
+  const { category, search, featured } = req.query;
 
   const where: Record<string, unknown> = {};
   if (typeof category === 'string' && category.length > 0) {
@@ -16,10 +29,18 @@ productsRouter.get('/', async (req, res) => {
   if (typeof search === 'string' && search.trim().length > 0) {
     where.name = { contains: search.trim() };
   }
+  if (featured === 'true') {
+    where.featured = true;
+  } else if (featured === 'false') {
+    where.featured = false;
+  }
+
+  const take = parseLimit(req.query.limit);
 
   const products = await prisma.product.findMany({
     where,
     orderBy: { createdAt: 'desc' },
+    ...(take === undefined ? {} : { take }),
   });
   res.json(products);
 });

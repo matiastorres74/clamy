@@ -11,6 +11,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { of, switchMap } from 'rxjs';
 import { ProductService } from '../../core/services/product';
 import { ProductCard } from '../../shared/product-card/product-card';
 import { CATEGORIES, Product } from '../../core/models/product.model';
@@ -65,14 +66,28 @@ export class Home implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.productService.getAll().subscribe({
-      next: (products) => {
-        const featured = products.filter((p) => p.featured);
-        this.featured.set((featured.length > 0 ? featured : products).slice(0, 4));
-        this.loading.set(false);
-      },
-      error: () => this.loading.set(false),
-    });
+    // Ask the API for just the four cards this page renders. Fetching the whole
+    // catalogue and filtering here meant the entire product list was serialised
+    // into the SSR transfer-state blob — at 1000 products that was ~300kB of
+    // HTML to show four items. The unfiltered follow-up only runs in the case
+    // the previous code also covered: nothing is flagged as featured yet.
+    this.productService
+      .getAll({ featured: true, limit: 4 })
+      .pipe(
+        switchMap((featured) =>
+          featured.length > 0 ? of(featured) : this.productService.getAll({ limit: 4 }),
+        ),
+      )
+      .subscribe({
+        next: (products) => {
+          // The API already applies the limit; slicing again keeps this page
+          // correct if it ships ahead of an API that doesn't honour it yet,
+          // since the two projects deploy independently.
+          this.featured.set(products.slice(0, 4));
+          this.loading.set(false);
+        },
+        error: () => this.loading.set(false),
+      });
 
     const prefersReducedMotion =
       this.isBrowser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

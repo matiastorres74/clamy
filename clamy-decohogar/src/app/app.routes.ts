@@ -1,19 +1,41 @@
 import { Routes } from '@angular/router';
-import { Home } from './pages/home/home';
-import { ProductList } from './pages/product-list/product-list';
-import { ProductDetail } from './pages/product-detail/product-detail';
-import { Cart } from './pages/cart/cart';
-import { AdminLogin } from './pages/admin-login/admin-login';
-import { AdminDashboard } from './pages/admin-dashboard/admin-dashboard';
-import { NotFound } from './pages/not-found/not-found';
 import { adminGuard } from './core/guards/admin-guard';
 
+// Every page is loaded on demand so the initial bundle carries only what an
+// anonymous visitor actually needs. The admin dashboard in particular pulls in
+// FormsModule and the upload flow, which no storefront visitor ever runs.
 export const routes: Routes = [
-  { path: '', component: Home },
-  { path: 'productos', component: ProductList },
-  { path: 'productos/:id', component: ProductDetail },
-  { path: 'carrito', component: Cart },
-  { path: 'admin/login', component: AdminLogin },
-  { path: 'admin', component: AdminDashboard, canActivate: [adminGuard] },
-  { path: '**', component: NotFound },
+  {
+    path: '',
+    loadComponent: () => import('./pages/home/home').then((m) => m.Home),
+  },
+  {
+    path: 'productos',
+    loadComponent: () =>
+      import('./pages/product-list/product-list').then((m) => m.ProductList),
+  },
+  {
+    path: 'productos/:id',
+    loadComponent: () =>
+      import('./pages/product-detail/product-detail').then((m) => m.ProductDetail),
+  },
+  {
+    path: 'carrito',
+    loadComponent: () => import('./pages/cart/cart').then((m) => m.Cart),
+  },
+  {
+    path: 'admin/login',
+    loadComponent: () =>
+      import('./pages/admin-login/admin-login').then((m) => m.AdminLogin),
+  },
+  {
+    path: 'admin',
+    loadComponent: () =>
+      import('./pages/admin-dashboard/admin-dashboard').then((m) => m.AdminDashboard),
+    canActivate: [adminGuard],
+  },
+  {
+    path: '**',
+    loadComponent: () => import('./pages/not-found/not-found').then((m) => m.NotFound),
+  },
 ];

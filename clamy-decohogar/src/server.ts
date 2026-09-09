@@ -71,14 +71,35 @@ app.use(
 );
 
 /**
+ * Lets Vercel's CDN serve rendered pages instead of invoking this function on
+ * every visit. Storefront HTML is identical for every visitor — the cart lives
+ * in localStorage and renders empty on the server — so a shared cache is safe.
+ *
+ * `stale-while-revalidate` is the part that matters on low traffic: once a page
+ * is warm the CDN keeps serving it instantly and refreshes in the background,
+ * so visitors stop paying the cold-start cost of waking this function.
+ *
+ * Admin pages are client-rendered and user-specific, so they stay uncached.
+ */
+const PAGE_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=86400';
+
+function isCacheablePage(method: string, path: string): boolean {
+  return method === 'GET' && !path.startsWith('/admin');
+}
+
+/**
  * Handle all other requests by rendering the Angular application.
  */
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) =>
-      response ? writeResponseToNodeResponse(response, res) : next(),
-    )
+    .then((response) => {
+      if (!response) return next();
+      if (isCacheablePage(req.method, req.path)) {
+        response.headers.set('Cache-Control', PAGE_CACHE_CONTROL);
+      }
+      return writeResponseToNodeResponse(response, res);
+    })
     .catch(next);
 });
 
