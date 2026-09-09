@@ -9,10 +9,17 @@ export class ProductService {
   private http = inject(HttpClient);
   private baseUrl = `${environment.apiUrl}/products`;
 
-  getAll(filters?: { category?: string; search?: string }): Observable<Product[]> {
+  getAll(filters?: {
+    category?: string;
+    search?: string;
+    featured?: boolean;
+    limit?: number;
+  }): Observable<Product[]> {
     const params: Record<string, string> = {};
     if (filters?.category) params['category'] = filters.category;
     if (filters?.search) params['search'] = filters.search;
+    if (filters?.featured !== undefined) params['featured'] = String(filters.featured);
+    if (filters?.limit !== undefined) params['limit'] = String(filters.limit);
     return this.http.get<Product[]>(this.baseUrl, { params });
   }
 
