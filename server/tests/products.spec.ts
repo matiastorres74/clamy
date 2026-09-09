@@ -59,6 +59,63 @@ describe('GET /api/products', () => {
     expect(res.body).toHaveLength(1);
     expect(res.body[0].name).toBe('Silla de madera');
   });
+
+  it('matches the search term regardless of case', async () => {
+    await prisma.product.create({ data: validProductBody({ name: 'Aplique de pared LED' }) });
+
+    const res = await request(app).get('/api/products').query({ search: 'aplique' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].name).toBe('Aplique de pared LED');
+  });
+
+  it('matches the search term when the shopper omits accents', async () => {
+    await prisma.product.create({ data: validProductBody({ name: 'Lámpara colgante Nordic' }) });
+
+    const res = await request(app).get('/api/products').query({ search: 'lampara' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].name).toBe('Lámpara colgante Nordic');
+  });
+
+  it('matches an accented search term against an unaccented name', async () => {
+    await prisma.product.create({ data: validProductBody({ name: 'Organizador de bambu' }) });
+
+    const res = await request(app).get('/api/products').query({ search: 'bambú' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+  });
+
+  it('treats wildcard characters in the search term literally', async () => {
+    await prisma.product.create({ data: validProductBody({ name: 'Descuento 50% verano' }) });
+    await prisma.product.create({ data: validProductBody({ name: 'Silla de madera' }) });
+
+    const res = await request(app).get('/api/products').query({ search: '50%' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].name).toBe('Descuento 50% verano');
+  });
+
+  it('combines search with a category filter', async () => {
+    await prisma.product.create({
+      data: validProductBody({ name: 'Lámpara colgante', category: 'lighting' }),
+    });
+    await prisma.product.create({
+      data: validProductBody({ name: 'Lampara de mesa', category: 'furniture' }),
+    });
+
+    const res = await request(app)
+      .get('/api/products')
+      .query({ search: 'lampara', category: 'lighting' });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toHaveLength(1);
+    expect(res.body[0].category).toBe('lighting');
+  });
 });
 
 describe('GET /api/products/:id', () => {
