@@ -17,6 +17,9 @@ import { ProductCard } from '../../shared/product-card/product-card';
 import { CATEGORIES, Product } from '../../core/models/product.model';
 
 const SLIDE_INTERVAL_MS = 6000;
+// How many products the "Destacados" section shows; two rows of the
+// three-column showroom grid.
+const FEATURED_COUNT = 6;
 
 interface HeroSlide {
   type: 'image' | 'video';
@@ -66,16 +69,16 @@ export class Home implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    // Ask the API for just the four cards this page renders. Fetching the whole
+    // Ask the API for just the cards this page renders. Fetching the whole
     // catalogue and filtering here meant the entire product list was serialised
     // into the SSR transfer-state blob — at 1000 products that was ~300kB of
-    // HTML to show four items. The unfiltered follow-up only runs in the case
+    // HTML to show a handful of items. The unfiltered follow-up only runs in the case
     // the previous code also covered: nothing is flagged as featured yet.
     this.productService
-      .getAll({ featured: true, limit: 4 })
+      .getAll({ featured: true, limit: FEATURED_COUNT })
       .pipe(
         switchMap((featured) =>
-          featured.length > 0 ? of(featured) : this.productService.getAll({ limit: 4 }),
+          featured.length > 0 ? of(featured) : this.productService.getAll({ limit: FEATURED_COUNT }),
         ),
       )
       .subscribe({
@@ -83,7 +86,7 @@ export class Home implements OnInit, OnDestroy {
           // The API already applies the limit; slicing again keeps this page
           // correct if it ships ahead of an API that doesn't honour it yet,
           // since the two projects deploy independently.
-          this.featured.set(products.slice(0, 4));
+          this.featured.set(products.slice(0, FEATURED_COUNT));
           this.loading.set(false);
         },
         error: () => this.loading.set(false),
