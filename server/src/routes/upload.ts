@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { put } from '@vercel/blob';
+import { blobToken } from '../lib/env';
 import { requireAdmin } from '../middleware/requireAdmin';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
@@ -45,9 +46,13 @@ uploadRouter.post('/', requireAdmin, async (req, res) => {
   // A failure here now propagates to the global error handler in app.ts,
   // which logs it and answers 500 instead of leaving the request hanging.
   const ext = path.extname(req.file.originalname).toLowerCase();
+  // `access: 'public'` is deliberate: the storefront renders these URLs in
+  // plain <img> tags for anonymous visitors, so the store itself must be
+  // public too — a private store rejects this call outright.
   const blob = await put(`${crypto.randomUUID()}${ext}`, req.file.buffer, {
     access: 'public',
     contentType: req.file.mimetype,
+    token: blobToken,
   });
 
   res.status(201).json({ imageUrl: blob.url });
