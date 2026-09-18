@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { isValidCategory } from '../lib/categories';
-import { requireAdmin } from '../middleware/requireAdmin';
+import { AuthedRequest, optionalAdmin, requireAdmin } from '../middleware/requireAdmin';
 
 export const productsRouter = Router();
 
@@ -30,6 +30,18 @@ async function findIdsMatchingName(term: string): Promise<number[]> {
   return rows.map((row) => row.id);
 }
 
+// The showroom never shows prices, but the admin table and edit form still
+// need them. Rather than trusting the client to hide the field, the public
+// read endpoints drop it unless the request carries a valid admin token; the
+// dashboard's interceptor attaches one automatically once logged in.
+type ProductRow = Prisma.ProductGetPayload<Record<string, never>>;
+
+function forViewer(product: ProductRow, req: AuthedRequest) {
+  if (req.admin) return product;
+  const { price: _price, ...publicFields } = product;
+  return publicFields;
+}
+
 function parseLimit(raw: unknown): number | undefined {
   if (typeof raw !== 'string' || raw.trim().length === 0) return undefined;
   const parsed = Number(raw);
@@ -37,7 +49,7 @@ function parseLimit(raw: unknown): number | undefined {
   return Math.min(parsed, MAX_LIMIT);
 }
 
-productsRouter.get('/', async (req, res) => {
+productsRouter.get('/', optionalAdmin, async (req: AuthedRequest, res) => {
   const { category, search, featured } = req.query;
 
   const where: Record<string, unknown> = {};
@@ -60,10 +72,10 @@ productsRouter.get('/', async (req, res) => {
     orderBy: { createdAt: 'desc' },
     ...(take === undefined ? {} : { take }),
   });
-  res.json(products);
+  res.json(products.map((product) => forViewer(product, req)));
 });
 
-productsRouter.get('/:id', async (req, res) => {
+productsRouter.get('/:id', optionalAdmin, async (req: AuthedRequest, res) => {
   const id = Number(req.params.id);
   if (!Number.isInteger(id)) {
     return res.status(400).json({ error: 'Invalid product id' });
@@ -73,7 +85,7 @@ productsRouter.get('/:id', async (req, res) => {
   if (!product) {
     return res.status(404).json({ error: 'Product not found' });
   }
-  res.json(product);
+  res.json(forViewer(product, req));
 });
 
 // Prisma's update/delete throw P2025 when the row doesn't exist. Any other

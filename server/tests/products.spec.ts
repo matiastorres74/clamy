@@ -36,6 +36,43 @@ describe('GET /api/products', () => {
     expect(res.body).toEqual([]);
   });
 
+  it('omits the price for anonymous visitors', async () => {
+    await prisma.product.create({ data: validProductBody() });
+
+    const list = await request(app).get('/api/products');
+    const one = await request(app).get(`/api/products/${list.body[0].id}`);
+
+    expect(list.status).toBe(200);
+    expect(list.body[0]).not.toHaveProperty('price');
+    expect(list.body[0].name).toBe('Lámpara de pie');
+    expect(one.body).not.toHaveProperty('price');
+  });
+
+  it('includes the price when the request carries an admin token', async () => {
+    await prisma.product.create({ data: validProductBody() });
+
+    const list = await request(app)
+      .get('/api/products')
+      .set('Authorization', `Bearer ${adminToken()}`);
+    const one = await request(app)
+      .get(`/api/products/${list.body[0].id}`)
+      .set('Authorization', `Bearer ${adminToken()}`);
+
+    expect(list.body[0].price).toBe(1000);
+    expect(one.body.price).toBe(1000);
+  });
+
+  it('treats a bad token on a public read as an anonymous visitor', async () => {
+    await prisma.product.create({ data: validProductBody() });
+
+    const res = await request(app)
+      .get('/api/products')
+      .set('Authorization', 'Bearer not-a-real-token');
+
+    expect(res.status).toBe(200);
+    expect(res.body[0]).not.toHaveProperty('price');
+  });
+
   it('filters by category', async () => {
     await prisma.product.create({ data: validProductBody() });
     await prisma.product.create({
@@ -268,6 +305,47 @@ describe('PUT /api/products/:id', () => {
     expect(res.status).toBe(200);
     expect(res.body.name).toBe('Nuevo nombre');
     expect(res.body.price).toBe(2000);
+  });
+
+  it('replaces the photo list with the one sent', async () => {
+    const created = await prisma.product.create({
+      data: validProductBody({ images: ['https://cdn.example/old.png'] }),
+    });
+    const images = ['https://cdn.example/new-1.png', 'https://cdn.example/new-2.png'];
+
+    const res = await request(app)
+      .put(`/api/products/${created.id}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(validProductBody({ images }));
+
+    expect(res.status).toBe(200);
+    expect(res.body.images).toEqual(images);
+  });
+
+  it('clears the photos when images is omitted', async () => {
+    const created = await prisma.product.create({
+      data: validProductBody({ images: ['https://cdn.example/old.png'] }),
+    });
+    const { images: _omit, ...body } = validProductBody();
+
+    const res = await request(app)
+      .put(`/api/products/${created.id}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(body);
+
+    expect(res.status).toBe(200);
+    expect(res.body.images).toEqual([]);
+  });
+
+  it('rejects an invalid photo list', async () => {
+    const created = await prisma.product.create({ data: validProductBody() });
+
+    const res = await request(app)
+      .put(`/api/products/${created.id}`)
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(validProductBody({ images: 'https://cdn.example/not-a-list.png' }));
+
+    expect(res.status).toBe(400);
   });
 
   it('returns 404 when updating a product that does not exist', async () => {
