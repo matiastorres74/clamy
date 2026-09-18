@@ -1,7 +1,7 @@
 <a class="product-card" [routerLink]="['/productos', product().id]">
   <figure class="product-card-media">
-    @if (product().imageUrl) {
-      <img class="product-image" [src]="product().imageUrl" [alt]="product().name" loading="lazy" />
+    @if (product().images[0]; as cover) {
+      <img class="product-image" [src]="cover" [alt]="product().name" loading="lazy" />
     } @else {
       <div class="product-image-placeholder">
         <span class="eyebrow">CLAMY</span>

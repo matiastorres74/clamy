@@ -13,7 +13,8 @@ model Product {
   name        String
   description String
   price       Float
-  imageUrl    String?
+  // Public URLs in display order; the first one is the cover shown on cards.
+  images      String[] @default([])
   category    String
   featured    Boolean  @default(false)
   createdAt   DateTime @default(now())

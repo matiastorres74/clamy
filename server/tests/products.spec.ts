@@ -19,7 +19,7 @@ function validProductBody(overrides: Record<string, unknown> = {}) {
     price: 1000,
     category: 'lighting',
     featured: false,
-    imageUrl: null,
+    images: [],
     ...overrides,
   };
 }
@@ -194,6 +194,53 @@ describe('POST /api/products', () => {
       .post('/api/products')
       .set('Authorization', `Bearer ${adminToken()}`)
       .send(validProductBody({ category: 'not-a-real-category' }));
+
+    expect(res.status).toBe(400);
+  });
+
+  it('stores the photo list in the order it was sent', async () => {
+    const images = ['https://cdn.example/a.png', 'https://cdn.example/b.png'];
+
+    const res = await request(app)
+      .post('/api/products')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(validProductBody({ images }));
+
+    expect(res.status).toBe(201);
+    expect(res.body.images).toEqual(images);
+
+    const stored = await prisma.product.findUnique({ where: { id: res.body.id } });
+    expect(stored?.images).toEqual(images);
+  });
+
+  it('defaults to no photos when images is omitted', async () => {
+    const { images: _omit, ...body } = validProductBody();
+
+    const res = await request(app)
+      .post('/api/products')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(body);
+
+    expect(res.status).toBe(201);
+    expect(res.body.images).toEqual([]);
+  });
+
+  it('rejects images that are not http(s) URLs', async () => {
+    const res = await request(app)
+      .post('/api/products')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(validProductBody({ images: ['javascript:alert(1)'] }));
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects more than twelve images', async () => {
+    const images = Array.from({ length: 13 }, (_, i) => `https://cdn.example/${i}.png`);
+
+    const res = await request(app)
+      .post('/api/products')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .send(validProductBody({ images }));
 
     expect(res.status).toBe(400);
   });

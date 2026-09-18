@@ -83,8 +83,23 @@ function isRecordNotFoundError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025';
 }
 
+// Upper bound on photos per product. Keeps a runaway admin form from turning
+// one row into an unbounded array and caps what the detail gallery renders.
+const MAX_IMAGES = 12;
+
+function isImageList(value: unknown): value is string[] {
+  return (
+    Array.isArray(value) &&
+    value.length <= MAX_IMAGES &&
+    value.every(
+      (url) =>
+        typeof url === 'string' && (url.startsWith('http://') || url.startsWith('https://')),
+    )
+  );
+}
+
 function validateProductBody(body: any) {
-  const { name, description, price, category, imageUrl, featured } = body ?? {};
+  const { name, description, price, category, images, featured } = body ?? {};
 
   if (typeof name !== 'string' || name.trim().length === 0) {
     return 'name is required';
@@ -98,8 +113,8 @@ function validateProductBody(body: any) {
   if (!isValidCategory(category)) {
     return 'category must be one of the valid category ids';
   }
-  if (imageUrl !== undefined && imageUrl !== null && typeof imageUrl !== 'string') {
-    return 'imageUrl must be a string';
+  if (images !== undefined && !isImageList(images)) {
+    return `images must be a list of up to ${MAX_IMAGES} http(s) URLs`;
   }
   if (featured !== undefined && typeof featured !== 'boolean') {
     return 'featured must be a boolean';
@@ -113,14 +128,14 @@ productsRouter.post('/', requireAdmin, async (req, res) => {
     return res.status(400).json({ error });
   }
 
-  const { name, description, price, category, imageUrl, featured } = req.body;
+  const { name, description, price, category, images, featured } = req.body;
   const product = await prisma.product.create({
     data: {
       name: name.trim(),
       description,
       price,
       category,
-      imageUrl: imageUrl ?? null,
+      images: images ?? [],
       featured: featured ?? false,
     },
   });
@@ -138,7 +153,7 @@ productsRouter.put('/:id', requireAdmin, async (req, res) => {
     return res.status(400).json({ error });
   }
 
-  const { name, description, price, category, imageUrl, featured } = req.body;
+  const { name, description, price, category, images, featured } = req.body;
 
   try {
     const product = await prisma.product.update({
@@ -148,7 +163,7 @@ productsRouter.put('/:id', requireAdmin, async (req, res) => {
         description,
         price,
         category,
-        imageUrl: imageUrl ?? null,
+        images: images ?? [],
         featured: featured ?? false,
       },
     });

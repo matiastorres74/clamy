@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
 import { ProductService } from '../../core/services/product';
 import { AuthService } from '../../core/services/auth';
 import {
@@ -19,12 +20,22 @@ interface ProductFormState {
   price: number | null;
   category: CategoryId;
   featured: boolean;
-  imageUrl: string | null;
+  /** Photos already stored for this product, in display order. */
+  images: string[];
+}
+
+/** A photo picked in this session but not uploaded yet. */
+interface PendingImage {
+  file: File;
+  /** Object URL for the preview; revoked when the entry is dropped. */
+  previewUrl: string;
 }
 
 // Mirrors the multer limit in server/src/routes/upload.ts so an oversized
 // photo is rejected before a mobile connection spends time uploading it.
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+// Mirrors MAX_IMAGES in server/src/routes/products.ts.
+const MAX_IMAGES = 12;
 
 function emptyForm(): ProductFormState {
   return {
@@ -34,7 +45,7 @@ function emptyForm(): ProductFormState {
     price: null,
     category: 'lighting',
     featured: false,
-    imageUrl: null,
+    images: [],
   };
 }
 
@@ -51,15 +62,12 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   protected categories = CATEGORIES;
   protected categoryLabel = categoryLabel;
+  protected maxImages = MAX_IMAGES;
   protected products = signal<Product[]>([]);
   protected loading = signal(true);
   protected showForm = signal(false);
   protected form: ProductFormState = emptyForm();
-  protected selectedFile = signal<File | null>(null);
-  // Object URL for the file the admin just picked. On a phone the native
-  // input shows little more than a filename, so without this there is no
-  // confirmation that the right photo was chosen before saving.
-  protected previewUrl = signal<string | null>(null);
+  protected pending = signal<PendingImage[]>([]);
   protected dragOver = signal(false);
   protected saving = signal(false);
   protected error = signal<string | null>(null);
@@ -69,7 +77,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.revokePreview();
+    this.clearPending();
   }
 
   private fetchProducts(): void {
@@ -85,7 +93,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   openCreateForm(): void {
     this.form = emptyForm();
-    this.setSelectedFile(null);
+    this.clearPending();
     this.error.set(null);
     this.showForm.set(true);
   }
@@ -98,25 +106,28 @@ export class AdminDashboard implements OnInit, OnDestroy {
       price: product.price,
       category: product.category,
       featured: product.featured,
-      imageUrl: product.imageUrl,
+      images: [...product.images],
     };
-    this.setSelectedFile(null);
+    this.clearPending();
     this.error.set(null);
     this.showForm.set(true);
   }
 
   closeForm(): void {
-    this.setSelectedFile(null);
+    this.clearPending();
     this.showForm.set(false);
   }
 
-  onFileSelected(event: Event): void {
+  /** Photos currently attached: stored ones plus this session's picks. */
+  protected totalImages(): number {
+    return this.form.images.length + this.pending().length;
+  }
+
+  onFilesSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (!this.setSelectedFile(input.files?.[0] ?? null)) {
-      // Clear the native control after a rejected pick, otherwise choosing the
-      // same file again doesn't fire `change` and the admin gets no feedback.
-      input.value = '';
-    }
+    this.addFiles(input.files);
+    // Reset so picking the same file again still fires `change`.
+    input.value = '';
   }
 
   onDragOver(event: DragEvent): void {
@@ -132,12 +143,25 @@ export class AdminDashboard implements OnInit, OnDestroy {
   onDrop(event: DragEvent): void {
     event.preventDefault();
     this.dragOver.set(false);
-    this.setSelectedFile(event.dataTransfer?.files?.[0] ?? null);
+    this.addFiles(event.dataTransfer?.files ?? null);
   }
 
-  clearSelectedFile(input: HTMLInputElement): void {
-    input.value = '';
-    this.setSelectedFile(null);
+  removeStoredImage(index: number): void {
+    this.form.images = this.form.images.filter((_, i) => i !== index);
+  }
+
+  /** Moves a stored photo to the front so it becomes the card cover. */
+  makeCover(index: number): void {
+    if (index === 0) return;
+    const images = [...this.form.images];
+    const [chosen] = images.splice(index, 1);
+    this.form.images = [chosen, ...images];
+  }
+
+  removePending(index: number): void {
+    const entry = this.pending()[index];
+    if (entry) URL.revokeObjectURL(entry.previewUrl);
+    this.pending.update((list) => list.filter((_, i) => i !== index));
   }
 
   formatSize(bytes: number): string {
@@ -145,38 +169,39 @@ export class AdminDashboard implements OnInit, OnDestroy {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   }
 
-  // Validates the pick client-side with the same rules the API enforces and
-  // swaps the preview. Returns whether the file was accepted.
-  private setSelectedFile(file: File | null): boolean {
-    this.revokePreview();
+  // Validates each pick with the same rules the API enforces and queues the
+  // accepted ones with a preview. Stops at the photo cap with a message
+  // rather than silently dropping the extras.
+  private addFiles(files: FileList | null): void {
+    if (!files || files.length === 0) return;
+    const accepted: PendingImage[] = [];
+    let problem: string | null = null;
 
-    if (file && !file.type.startsWith('image/')) {
-      this.selectedFile.set(null);
-      this.error.set('Elegí un archivo de imagen (JPG, PNG, WEBP o GIF).');
-      return false;
-    }
-    if (file && file.size > MAX_IMAGE_BYTES) {
-      this.selectedFile.set(null);
-      this.error.set('La imagen supera los 5 MB. Probá con una más liviana.');
-      return false;
+    for (const file of Array.from(files)) {
+      if (this.totalImages() + accepted.length >= MAX_IMAGES) {
+        problem = `Podés cargar hasta ${MAX_IMAGES} fotos por producto.`;
+        break;
+      }
+      if (!file.type.startsWith('image/')) {
+        problem = `"${file.name}" no es una imagen (JPG, PNG, WEBP o GIF).`;
+        continue;
+      }
+      if (file.size > MAX_IMAGE_BYTES) {
+        problem = `"${file.name}" supera los 5 MB.`;
+        continue;
+      }
+      accepted.push({ file, previewUrl: URL.createObjectURL(file) });
     }
 
-    this.error.set(null);
-    this.selectedFile.set(file);
-    if (file) {
-      this.previewUrl.set(URL.createObjectURL(file));
-    }
-    return true;
+    this.pending.update((list) => [...list, ...accepted]);
+    this.error.set(problem);
   }
 
   // Object URLs hold the file in memory until released, which adds up on a
   // phone if the admin cycles through several photos before saving.
-  private revokePreview(): void {
-    const url = this.previewUrl();
-    if (url) {
-      URL.revokeObjectURL(url);
-      this.previewUrl.set(null);
-    }
+  private clearPending(): void {
+    for (const entry of this.pending()) URL.revokeObjectURL(entry.previewUrl);
+    this.pending.set([]);
   }
 
   save(): void {
@@ -189,28 +214,26 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.saving.set(true);
     this.error.set(null);
 
-    const file = this.selectedFile();
-    if (file) {
-      this.productService.uploadImage(file).subscribe({
-        next: (res) => this.persist(f, res.imageUrl),
-        error: () => {
-          this.saving.set(false);
-          this.error.set('No se pudo subir la imagen.');
-        },
-      });
-    } else {
-      this.persist(f, f.imageUrl);
-    }
+    // Upload every new photo first, then persist the product with the full
+    // list (kept stored photos + new URLs) in display order.
+    const uploads = this.pending().map((entry) => this.productService.uploadImage(entry.file));
+    (uploads.length > 0 ? forkJoin(uploads) : of([])).subscribe({
+      next: (results) => this.persist(f, [...f.images, ...results.map((r) => r.imageUrl)]),
+      error: () => {
+        this.saving.set(false);
+        this.error.set('No se pudo subir alguna de las imágenes.');
+      },
+    });
   }
 
-  private persist(f: ProductFormState, imageUrl: string | null): void {
+  private persist(f: ProductFormState, images: string[]): void {
     const payload: ProductInput = {
       name: f.name.trim(),
       description: f.description,
       price: f.price as number,
       category: f.category,
       featured: f.featured,
-      imageUrl,
+      images,
     };
 
     const request = f.id
@@ -220,6 +243,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
     request.subscribe({
       next: () => {
         this.saving.set(false);
+        this.clearPending();
         this.showForm.set(false);
         this.fetchProducts();
       },

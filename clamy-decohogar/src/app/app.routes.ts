@@ -11,8 +11,7 @@ export const routes: Routes = [
   },
   {
     path: 'productos',
-    loadComponent: () =>
-      import('./pages/product-list/product-list').then((m) => m.ProductList),
+    loadComponent: () => import('./pages/product-list/product-list').then((m) => m.ProductList),
   },
   {
     path: 'productos/:id',
@@ -21,8 +20,7 @@ export const routes: Routes = [
   },
   {
     path: 'admin/login',
-    loadComponent: () =>
-      import('./pages/admin-login/admin-login').then((m) => m.AdminLogin),
+    loadComponent: () => import('./pages/admin-login/admin-login').then((m) => m.AdminLogin),
   },
   {
     path: 'admin',

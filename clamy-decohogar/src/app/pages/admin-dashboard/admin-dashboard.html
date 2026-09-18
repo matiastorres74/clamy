@@ -48,7 +48,10 @@
           </div>
 
           <div class="field field-full">
-            <span class="field-caption" id="image-label">Imagen</span>
+            <span class="field-caption" id="image-label">
+              Fotos
+              <span class="field-caption-count">{{ totalImages() }} / {{ maxImages }}</span>
+            </span>
             <div class="uploader">
               <!--
                 The native input stays in the DOM (visually hidden, still
@@ -58,15 +61,15 @@
                 purpose, since it would force the camera and hide the gallery.
               -->
               <input
-                #imageInput
                 id="image"
                 name="image"
                 type="file"
                 accept="image/*"
+                multiple
                 class="uploader-input"
                 aria-labelledby="image-label"
                 aria-describedby="image-hint"
-                (change)="onFileSelected($event)"
+                (change)="onFilesSelected($event)"
               />
               <label
                 for="image"
@@ -77,35 +80,55 @@
                 (drop)="onDrop($event)"
               >
                 <span class="uploader-title">
-                  {{ selectedFile() || form.imageUrl ? 'Cambiar imagen' : 'Elegir imagen' }}
+                  {{ totalImages() > 0 ? 'Agregar más fotos' : 'Elegir fotos' }}
                 </span>
                 <span class="uploader-hint" id="image-hint">
-                  Tocá para abrir la galería o la cámara · JPG, PNG, WEBP o GIF · hasta 5 MB
+                  Tocá para abrir la galería o la cámara · podés elegir varias · JPG, PNG, WEBP o
+                  GIF · hasta 5 MB cada una
                 </span>
               </label>
 
-              @if (previewUrl(); as url) {
-                <div class="uploader-preview">
-                  <img [src]="url" alt="Vista previa de la imagen seleccionada" />
-                  <div class="uploader-meta">
-                    <span class="uploader-name">{{ selectedFile()?.name }}</span>
-                    <span class="muted">{{ formatSize(selectedFile()?.size ?? 0) }}</span>
-                    <button
-                      class="btn uploader-remove"
-                      type="button"
-                      (click)="clearSelectedFile(imageInput)"
-                    >
-                      Quitar
-                    </button>
-                  </div>
-                </div>
-              } @else if (form.imageUrl) {
-                <div class="uploader-preview">
-                  <img class="product-image" [src]="form.imageUrl" alt="Imagen actual del producto" />
-                  <div class="uploader-meta">
-                    <span class="muted">Imagen actual</span>
-                  </div>
-                </div>
+              @if (totalImages() > 0) {
+                <ul class="uploader-list" aria-label="Fotos del producto">
+                  @for (src of form.images; track src; let i = $index) {
+                    <li class="uploader-item">
+                      <img class="product-image" [src]="src" alt="" />
+                      <div class="uploader-meta">
+                        <span class="uploader-name">
+                          {{ i === 0 ? 'Portada' : 'Foto ' + (i + 1) }}
+                        </span>
+                        <div class="uploader-item-actions">
+                          @if (i > 0) {
+                            <button class="btn uploader-mini" type="button" (click)="makeCover(i)">
+                              Hacer portada
+                            </button>
+                          }
+                          <button
+                            class="btn uploader-mini"
+                            type="button"
+                            (click)="removeStoredImage(i)"
+                          >
+                            Quitar
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  }
+                  @for (entry of pending(); track entry.previewUrl; let i = $index) {
+                    <li class="uploader-item is-pending">
+                      <img [src]="entry.previewUrl" alt="" />
+                      <div class="uploader-meta">
+                        <span class="uploader-name">{{ entry.file.name }}</span>
+                        <span class="muted">{{ formatSize(entry.file.size) }} · nueva</span>
+                        <div class="uploader-item-actions">
+                          <button class="btn uploader-mini" type="button" (click)="removePending(i)">
+                            Quitar
+                          </button>
+                        </div>
+                      </div>
+                    </li>
+                  }
+                </ul>
               }
             </div>
           </div>
@@ -146,8 +169,8 @@
           @for (product of products(); track product.id) {
             <tr>
               <td class="thumb-cell">
-                @if (product.imageUrl) {
-                  <img class="product-image" [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+                @if (product.images[0]; as cover) {
+                  <img class="product-image" [src]="cover" [alt]="product.name" loading="lazy" />
                 } @else {
                   <div class="thumb-placeholder" aria-label="Sin foto">—</div>
                 }
