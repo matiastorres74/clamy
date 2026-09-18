@@ -22,7 +22,8 @@ export interface Product {
   name: string;
   description: string;
   price: number;
-  imageUrl: string | null;
+  /** Public photo URLs in display order; the first one is the cover. */
+  images: string[];
   category: CategoryId;
   featured: boolean;
   createdAt: string;

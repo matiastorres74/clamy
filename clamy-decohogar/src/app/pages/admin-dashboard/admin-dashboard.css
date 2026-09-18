@@ -124,27 +124,50 @@
   color: var(--text-faint);
 }
 
-.uploader-preview {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  min-width: 0;
+.field-caption-count {
+  float: right;
+  letter-spacing: 0.05em;
 }
 
-.uploader-preview img {
-  flex: none;
-  width: 96px;
-  height: 96px;
-  object-fit: cover;
+.uploader-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.6rem;
+}
+
+.uploader-item {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  min-width: 0;
+  padding: 0.5rem;
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  background: var(--bg-elevated);
+}
+
+.uploader-item img {
+  flex: none;
+  width: 64px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: var(--radius);
+  /* Admin previews show the real photo, not the storefront treatment. */
+  filter: none;
+}
+
+.uploader-item.is-pending {
+  border-style: dashed;
 }
 
 .uploader-meta {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.3rem;
   min-width: 0;
   justify-items: start;
+  flex: 1;
 }
 
 /* A long camera filename (IMG_20260917_143212.jpg) must not push the
@@ -154,13 +177,21 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
 }
 
-/* 44px minimum hit area per mobile accessibility guidance. */
-.uploader-remove {
+.uploader-item-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* Compact but still a 44px hit area per mobile accessibility guidance. */
+.uploader-mini {
   min-height: 44px;
-  padding-inline: 1.25rem;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
 }
 
 .form-actions {

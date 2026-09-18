@@ -7,17 +7,95 @@
     <p class="muted">No encontramos este producto.</p>
   } @else if (product(); as p) {
     <article class="detail">
-      <div class="detail-gallery">
-        <figure class="detail-figure">
-          @if (p.imageUrl) {
-            <img class="product-image" [src]="p.imageUrl" [alt]="p.name" />
-          } @else {
+      <div
+        class="gallery"
+        role="region"
+        aria-roledescription="carrusel"
+        [attr.aria-label]="'Fotos de ' + p.name"
+        (keydown.arrowLeft)="goTo(activeIndex() - 1)"
+        (keydown.arrowRight)="goTo(activeIndex() + 1)"
+      >
+        @if (images().length > 0) {
+          <div class="gallery-stage">
+            <div #track class="gallery-track" (scroll)="onTrackScroll()">
+              @for (src of images(); track src; let i = $index) {
+                <figure class="gallery-slide" [attr.aria-hidden]="i !== activeIndex()">
+                  <img
+                    class="product-image"
+                    [src]="src"
+                    [alt]="p.name + ' — foto ' + (i + 1) + ' de ' + images().length"
+                    [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+                  />
+                </figure>
+              }
+            </div>
+
+            @if (images().length > 1) {
+              <button
+                class="gallery-arrow gallery-arrow-prev"
+                type="button"
+                (click)="goTo(activeIndex() - 1)"
+                aria-label="Foto anterior"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M15 5l-7 7 7 7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+              <button
+                class="gallery-arrow gallery-arrow-next"
+                type="button"
+                (click)="goTo(activeIndex() + 1)"
+                aria-label="Foto siguiente"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                >
+                  <path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+              </button>
+
+              <span class="gallery-counter" aria-live="polite">
+                {{ activeIndex() + 1 }} / {{ images().length }}
+              </span>
+            }
+          </div>
+
+          @if (images().length > 1) {
+            <div class="gallery-thumbs">
+              @for (src of images(); track src; let i = $index) {
+                <button
+                  class="gallery-thumb"
+                  type="button"
+                  [class.active]="i === activeIndex()"
+                  (click)="goTo(i)"
+                  [attr.aria-label]="'Ver foto ' + (i + 1)"
+                  [attr.aria-current]="i === activeIndex() ? 'true' : null"
+                >
+                  <img [src]="src" alt="" loading="lazy" />
+                </button>
+              }
+            </div>
+          }
+        } @else {
+          <figure class="gallery-slide gallery-empty">
             <div class="detail-placeholder">
               <span class="eyebrow">CLAMY</span>
               <span class="placeholder-caption">Foto próximamente</span>
             </div>
-          }
-        </figure>
+          </figure>
+        }
       </div>
 
       <div class="detail-info">
