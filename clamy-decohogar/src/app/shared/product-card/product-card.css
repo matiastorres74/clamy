@@ -1,39 +1,43 @@
 :host {
-  display: flex;
-  flex-direction: column;
+  display: block;
   height: 100%;
 }
 
+/* The whole card is the link: in a showroom the only action is "look closer",
+   so there is no separate button competing with the photograph. */
 .product-card {
   display: flex;
   flex-direction: column;
   height: 100%;
+  color: inherit;
 }
 
-.product-card-link {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.product-card-image {
+.product-card-media {
+  margin: 0;
   aspect-ratio: 4 / 5;
   background: var(--bg-elevated);
   overflow: hidden;
 }
 
-.product-card-image img {
+.product-card-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  /* Cards show the photo in full colour; the global .product-image rule in
-     styles.css still desaturates it elsewhere (detail, cart, admin). */
+  /* Showroom photography stays in colour; the global .product-image rule
+     in styles.css still applies its treatment elsewhere. */
   filter: none;
-  transition: transform 0.6s ease;
+  transform: scale(1);
+  transition: transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1), opacity 0.4s ease;
 }
 
-.product-card:hover .product-image {
-  transform: scale(1.03);
+.product-card:hover .product-card-media img,
+.product-card:focus-visible .product-card-media img {
+  transform: scale(1.04);
+}
+
+.product-card:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
 }
 
 .product-image-placeholder {
@@ -51,61 +55,38 @@
   color: var(--text-dim);
 }
 
+/* Gallery-style caption: quiet category line, then the title. Left-aligned
+   so a row of cards reads like a wall of labelled works. */
 .product-card-body {
-  padding: 1.6rem 0.5rem 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.5rem;
-  flex: 1;
+  gap: 0.4rem;
+  padding: 1.1rem 0.15rem 0;
+}
+
+.product-card-category {
+  font-family: var(--font-display);
+  font-size: 0.66rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 .product-card-name {
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.22em;
-  line-height: 1.5;
-  min-height: 3em;
+  letter-spacing: 0.01em;
+  line-height: 1.4;
+  /* Two lines reserved so cards in a row keep a common baseline. */
+  min-height: 2.8em;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color 0.3s ease;
 }
 
-.product-card-category {
-  font-size: 0.78rem;
+.product-card:hover .product-card-name {
   color: var(--text-dim);
-}
-
-.product-card-price {
-  color: var(--text);
-  font-weight: 500;
-  font-size: 1rem;
-  letter-spacing: 0.02em;
-  margin-top: 0.35rem;
-}
-
-/* Understated so it reads as part of the stack rather than a boxed CTA —
-   the reference layout has no button, but this one still has to be
-   reachable on touch, so it stays visible instead of hover-only. */
-.product-card-add {
-  margin-top: auto;
-  padding: 0.9rem 0 0.4rem;
-  align-self: center;
-  background: none;
-  border: none;
-  border-radius: 0;
-  font-size: 0.7rem;
-  font-weight: 500;
-  letter-spacing: 0.18em;
-  color: var(--text-dim);
-}
-
-.product-card-add:hover {
-  background: none;
-  box-shadow: none;
-  color: var(--text);
 }

@@ -1,5 +1,5 @@
 .detail-page {
-  padding-block: 3rem 5rem;
+  padding-block: 2.5rem 6rem;
 }
 
 .back-link {
@@ -7,31 +7,39 @@
   color: var(--text-faint);
   font-size: 0.85rem;
   margin-bottom: 2rem;
+  transition: color 0.2s ease;
 }
 
 .back-link:hover {
   color: var(--text);
 }
 
-.detail-grid {
+.detail {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 3rem;
+  gap: 2.5rem;
   align-items: start;
 }
 
-.detail-image {
-  aspect-ratio: 1 / 1;
+/* Single-image "gallery" for now — the catalogue stores one photo per
+   product. Kept as its own block so a multi-image carousel can slot in here
+   without touching the info column. */
+.detail-figure {
+  margin: 0;
+  aspect-ratio: 4 / 5;
+  background: var(--bg-elevated);
   overflow: hidden;
 }
 
-.detail-image img {
+.detail-figure img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  /* The detail view is the showcase: full colour, same as the cards. */
+  filter: none;
 }
 
-.detail-image-placeholder {
+.detail-placeholder {
   width: 100%;
   height: 100%;
   display: flex;
@@ -46,43 +54,57 @@
   color: var(--text-dim);
 }
 
-.detail-title {
-  font-size: 2rem;
-  margin-block: 0.75rem 1rem;
-}
-
-.detail-price {
-  font-size: 1.6rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 1.5rem;
-}
-
-.detail-description {
-  margin-bottom: 2rem;
-}
-
-.qty-row {
+.detail-info {
   display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  flex-direction: column;
 }
 
-.qty-label {
+.detail-title {
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  margin-block: 0.75rem 1.5rem;
+}
+
+/* The description is the copy that sells now that there is no price.
+   pre-line honours paragraph breaks typed in the admin form, and the
+   measure is capped so long text stays readable on wide screens. */
+.detail-description {
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: var(--text-dim);
+  white-space: pre-line;
+  max-width: 60ch;
+  margin-bottom: 2.25rem;
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.detail-actions .btn {
+  flex: 1 1 auto;
+  min-height: 48px;
+}
+
+.detail-note {
+  margin-top: 1rem;
   font-size: 0.8rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
   color: var(--text-faint);
 }
 
-.detail-add {
-  width: 100%;
-  margin-bottom: 0.75rem;
-}
+@media (min-width: 901px) {
+  .detail {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: 4rem;
+  }
 
-@media (min-width: 801px) {
-  .detail-grid {
-    grid-template-columns: 1fr 1fr;
+  /* Keeps title and CTA in view while a long description scrolls past. */
+  .detail-info {
+    position: sticky;
+    top: 6rem;
   }
 }

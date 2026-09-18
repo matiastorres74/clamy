@@ -214,7 +214,7 @@ label {
 .product-grid {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 3rem 1.75rem;
+  gap: 3.5rem 2rem;
 }
 
 @media (min-width: 561px) {
@@ -223,30 +223,12 @@ label {
   }
 }
 
+/* Three columns instead of four: the photograph is the product now, so each
+   one gets ~33% more width at desktop sizes. */
 @media (min-width: 1001px) {
   .product-grid {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
+    gap: 4rem 2.5rem;
   }
 }
 
-.qty-stepper {
-  display: flex;
-  align-items: center;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-}
-
-.qty-stepper button {
-  background: none;
-  border: none;
-  color: var(--text);
-  width: 2.5rem;
-  height: 2.5rem;
-  cursor: pointer;
-  font-size: 1.1rem;
-}
-
-.qty-stepper span {
-  width: 2.5rem;
-  text-align: center;
-}
