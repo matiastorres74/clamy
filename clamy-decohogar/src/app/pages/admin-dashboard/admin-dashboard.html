@@ -48,11 +48,66 @@
           </div>
 
           <div class="field field-full">
-            <label for="image">Imagen</label>
-            <input id="image" name="image" type="file" accept="image/*" (change)="onFileSelected($event)" />
-            @if (form.imageUrl && !selectedFile()) {
-              <img class="image-preview product-image" [src]="form.imageUrl" alt="Imagen actual" />
-            }
+            <span class="field-caption" id="image-label">Imagen</span>
+            <div class="uploader">
+              <!--
+                The native input stays in the DOM (visually hidden, still
+                focusable) so keyboard and assistive tech keep working; the
+                label below is the tap target. `accept="image/*"` lets the
+                phone offer camera *and* gallery — `capture` is left off on
+                purpose, since it would force the camera and hide the gallery.
+              -->
+              <input
+                #imageInput
+                id="image"
+                name="image"
+                type="file"
+                accept="image/*"
+                class="uploader-input"
+                aria-labelledby="image-label"
+                aria-describedby="image-hint"
+                (change)="onFileSelected($event)"
+              />
+              <label
+                for="image"
+                class="uploader-drop"
+                [class.is-dragover]="dragOver()"
+                (dragover)="onDragOver($event)"
+                (dragleave)="onDragLeave($event)"
+                (drop)="onDrop($event)"
+              >
+                <span class="uploader-title">
+                  {{ selectedFile() || form.imageUrl ? 'Cambiar imagen' : 'Elegir imagen' }}
+                </span>
+                <span class="uploader-hint" id="image-hint">
+                  Tocá para abrir la galería o la cámara · JPG, PNG, WEBP o GIF · hasta 5 MB
+                </span>
+              </label>
+
+              @if (previewUrl(); as url) {
+                <div class="uploader-preview">
+                  <img [src]="url" alt="Vista previa de la imagen seleccionada" />
+                  <div class="uploader-meta">
+                    <span class="uploader-name">{{ selectedFile()?.name }}</span>
+                    <span class="muted">{{ formatSize(selectedFile()?.size ?? 0) }}</span>
+                    <button
+                      class="btn uploader-remove"
+                      type="button"
+                      (click)="clearSelectedFile(imageInput)"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                </div>
+              } @else if (form.imageUrl) {
+                <div class="uploader-preview">
+                  <img class="product-image" [src]="form.imageUrl" alt="Imagen actual del producto" />
+                  <div class="uploader-meta">
+                    <span class="muted">Imagen actual</span>
+                  </div>
+                </div>
+              }
+            </div>
           </div>
         </div>
 

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Request, Response, Router } from 'express';
 import multer from 'multer';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -20,21 +20,35 @@ const upload = multer({
 
 export const uploadRouter = Router();
 
-uploadRouter.post('/', requireAdmin, (req, res) => {
-  upload.single('image')(req, res, async (err) => {
-    if (err) {
-      return res.status(400).json({ error: err.message });
-    }
-    if (!req.file) {
-      return res.status(400).json({ error: 'No image file provided' });
-    }
-
-    const ext = path.extname(req.file.originalname).toLowerCase();
-    const blob = await put(`${crypto.randomUUID()}${ext}`, req.file.buffer, {
-      access: 'public',
-      contentType: req.file.mimetype,
-    });
-
-    res.status(201).json({ imageUrl: blob.url });
+// Multer only speaks callbacks. Wrapping it lets the route below be a plain
+// async handler, which matters more than it looks: the previous version did
+// the Blob upload *inside* multer's callback, so when `put()` rejected (e.g.
+// no BLOB_READ_WRITE_TOKEN) nothing awaited that promise. express-async-errors
+// never saw it, no response was written, and Node treated it as an unhandled
+// rejection and killed the process — every image upload took the API down.
+function parseImage(req: Request, res: Response): Promise<void> {
+  return new Promise((resolve, reject) => {
+    upload.single('image')(req, res, (err: unknown) => (err ? reject(err) : resolve()));
   });
+}
+
+uploadRouter.post('/', requireAdmin, async (req, res) => {
+  try {
+    await parseImage(req, res);
+  } catch (err) {
+    return res.status(400).json({ error: err instanceof Error ? err.message : 'Invalid upload' });
+  }
+  if (!req.file) {
+    return res.status(400).json({ error: 'No image file provided' });
+  }
+
+  // A failure here now propagates to the global error handler in app.ts,
+  // which logs it and answers 500 instead of leaving the request hanging.
+  const ext = path.extname(req.file.originalname).toLowerCase();
+  const blob = await put(`${crypto.randomUUID()}${ext}`, req.file.buffer, {
+    access: 'public',
+    contentType: req.file.mimetype,
+  });
+
+  res.status(201).json({ imageUrl: blob.url });
 });
