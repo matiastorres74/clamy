@@ -51,17 +51,6 @@
   </a>
 </section>
 
-<section id="categorias" class="container categories-section">
-  <h2 class="section-title">Categorías</h2>
-  <div class="category-grid">
-    @for (cat of categories; track cat.id) {
-      <a class="category-tile card" [routerLink]="['/productos']" [queryParams]="{ category: cat.id }">
-        <span class="category-tile-label">{{ cat.label }}</span>
-      </a>
-    }
-  </div>
-</section>
-
 <section class="container featured-section">
   <h2 class="section-title">Destacados</h2>
 
@@ -76,4 +65,15 @@
       }
     </div>
   }
+</section>
+
+<section id="categorias" class="container categories-section">
+  <h2 class="section-title">Categorías</h2>
+  <div class="category-grid">
+    @for (cat of categories; track cat.id) {
+      <a class="category-tile card" [routerLink]="['/productos']" [queryParams]="{ category: cat.id }">
+        <span class="category-tile-label">{{ cat.label }}</span>
+      </a>
+    }
+  </div>
 </section>

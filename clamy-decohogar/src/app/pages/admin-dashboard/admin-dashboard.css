@@ -50,12 +50,117 @@
   width: auto;
 }
 
-.image-preview {
-  width: 120px;
-  height: 120px;
-  object-fit: cover;
-  margin-top: 0.75rem;
+/* Same look as the global <label>; a span is used so the input's accessible
+   name comes only from here, not from the drop-zone label's copy as well. */
+.field-caption {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-faint);
+}
+
+.uploader {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* Visually hidden, not display:none — keeps it focusable for keyboard and
+   screen-reader users while the label below is what people tap. */
+.uploader-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.uploader-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 6rem;
+  margin: 0;
+  padding: 1.25rem 1rem;
+  border: 1px dashed var(--border-strong);
   border-radius: var(--radius);
+  background: var(--bg-elevated);
+  text-align: center;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.uploader-drop:hover,
+.uploader-drop.is-dragover {
+  border-color: var(--text);
+  background: var(--surface-hover);
+}
+
+.uploader-input:focus-visible + .uploader-drop {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+.uploader-title {
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.uploader-hint {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-faint);
+}
+
+.uploader-preview {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.uploader-preview img {
+  flex: none;
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.uploader-meta {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+  justify-items: start;
+}
+
+/* A long camera filename (IMG_20260917_143212.jpg) must not push the
+   layout wider than a phone screen. */
+.uploader-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.9rem;
+}
+
+/* 44px minimum hit area per mobile accessibility guidance. */
+.uploader-remove {
+  min-height: 44px;
+  padding-inline: 1.25rem;
 }
 
 .form-actions {
@@ -63,6 +168,15 @@
   justify-content: flex-end;
   gap: 0.75rem;
   margin-top: 1.5rem;
+}
+
+/* On phones the save/cancel pair sits right under the uploader; give each a
+   full-width 44px target instead of two small buttons crowded to the right. */
+@media (max-width: 700px) {
+  .form-actions .btn {
+    flex: 1;
+    min-height: 44px;
+  }
 }
 
 .error-text {
