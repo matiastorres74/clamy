@@ -6,41 +6,41 @@
   } @else if (notFound()) {
     <p class="muted">No encontramos este producto.</p>
   } @else if (product(); as p) {
-    <div class="detail-grid">
-      <div class="detail-image card">
-        @if (p.imageUrl) {
-          <img class="product-image" [src]="p.imageUrl" [alt]="p.name" />
-        } @else {
-          <div class="detail-image-placeholder">
-            <span class="eyebrow">CLAMY</span>
-            <span class="placeholder-caption">Foto próximamente</span>
-          </div>
-        }
+    <article class="detail">
+      <div class="detail-gallery">
+        <figure class="detail-figure">
+          @if (p.imageUrl) {
+            <img class="product-image" [src]="p.imageUrl" [alt]="p.name" />
+          } @else {
+            <div class="detail-placeholder">
+              <span class="eyebrow">CLAMY</span>
+              <span class="placeholder-caption">Foto próximamente</span>
+            </div>
+          }
+        </figure>
       </div>
 
       <div class="detail-info">
         <span class="eyebrow">{{ categoryLabel(p.category) }}</span>
         <h1 class="detail-title">{{ p.name }}</h1>
-        <p class="detail-price">{{ p.price | arsCurrency }}</p>
-        <p class="detail-description">{{ p.description }}</p>
 
-        <div class="qty-row">
-          <span class="qty-label">Cantidad</span>
-          <div class="qty-stepper">
-            <button type="button" (click)="decrementQty()" aria-label="Restar">-</button>
-            <span>{{ qty() }}</span>
-            <button type="button" (click)="incrementQty()" aria-label="Sumar">+</button>
-          </div>
+        @if (p.description) {
+          <p class="detail-description">{{ p.description }}</p>
+        }
+
+        <div class="detail-actions">
+          <a class="btn btn-solid" [href]="whatsappUrl()" target="_blank" rel="noopener">
+            Consultar por WhatsApp
+          </a>
+          <a class="btn" [routerLink]="['/productos']" [queryParams]="{ category: p.category }">
+            Ver más de {{ categoryLabel(p.category) }}
+          </a>
         </div>
 
-        <button class="btn btn-solid detail-add" (click)="addToCart()" aria-live="polite">
-          {{ added() ? 'Agregado ✓' : 'Agregar al carrito' }}
-        </button>
-
-        <a class="btn" href="https://wa.me/5493415400815" target="_blank" rel="noopener">
-          Consultar por WhatsApp
-        </a>
+        <p class="detail-note">
+          Te respondemos por WhatsApp con disponibilidad, medidas y variantes.
+        </p>
       </div>
-    </div>
+    </article>
   }
 </section>
