@@ -29,6 +29,13 @@
   outline: none;
 }
 
+/* The gallery itself is focusable so the arrow keys work without first
+   tabbing to a thumbnail; show the ring only for keyboard focus. */
+.gallery:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 4px;
+}
+
 .gallery-stage {
   position: relative;
 }

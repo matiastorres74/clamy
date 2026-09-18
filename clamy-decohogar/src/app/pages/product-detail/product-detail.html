@@ -11,6 +11,7 @@
         class="gallery"
         role="region"
         aria-roledescription="carrusel"
+        tabindex="0"
         [attr.aria-label]="'Fotos de ' + p.name"
         (keydown.arrowLeft)="goTo(activeIndex() - 1)"
         (keydown.arrowRight)="goTo(activeIndex() + 1)"

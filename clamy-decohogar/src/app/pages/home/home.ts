@@ -15,6 +15,7 @@ import { of, switchMap } from 'rxjs';
 import { ProductService } from '../../core/services/product';
 import { ProductCard } from '../../shared/product-card/product-card';
 import { CATEGORIES, Product } from '../../core/models/product.model';
+import { environment } from '../../../environments/environment';
 
 const SLIDE_INTERVAL_MS = 6000;
 // How many products the "Destacados" section shows; two rows of the
@@ -40,6 +41,7 @@ export class Home implements OnInit, OnDestroy {
   @ViewChild('heroVideo') private heroVideoRef?: ElementRef<HTMLVideoElement>;
 
   protected categories = CATEGORIES;
+  protected whatsappUrl = `https://wa.me/${environment.whatsappNumber}`;
   protected featured = signal<Product[]>([]);
   protected loading = signal(true);
 

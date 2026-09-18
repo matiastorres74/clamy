@@ -21,7 +21,8 @@ export interface Product {
   id: number;
   name: string;
   description: string;
-  price: number;
+  /** Only present when the request carried an admin token; the public API strips it. */
+  price?: number;
   /** Public photo URLs in display order; the first one is the cover. */
   images: string[];
   category: CategoryId;
@@ -30,4 +31,8 @@ export interface Product {
   updatedAt: string;
 }
 
-export type ProductInput = Omit<Product, 'id' | 'createdAt' | 'updatedAt'>;
+// Writes still require a price: it stays mandatory for internal admin use
+// even though the showroom never shows it.
+export type ProductInput = Omit<Product, 'id' | 'createdAt' | 'updatedAt' | 'price'> & {
+  price: number;
+};

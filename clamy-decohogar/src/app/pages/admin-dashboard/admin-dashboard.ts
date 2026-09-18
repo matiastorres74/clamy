@@ -37,6 +37,17 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 // Mirrors MAX_IMAGES in server/src/routes/products.ts.
 const MAX_IMAGES = 12;
 
+// Same rules the API applies in multer; null means the file is acceptable.
+function rejectReason(file: File): string | null {
+  if (!file.type.startsWith('image/')) {
+    return `"${file.name}" no es una imagen (JPG, PNG, WEBP o GIF).`;
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    return `"${file.name}" supera los 5 MB.`;
+  }
+  return null;
+}
+
 function emptyForm(): ProductFormState {
   return {
     id: null,
@@ -103,7 +114,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
       id: product.id,
       name: product.name,
       description: product.description,
-      price: product.price,
+      price: product.price ?? null,
       category: product.category,
       featured: product.featured,
       images: [...product.images],
@@ -175,26 +186,25 @@ export class AdminDashboard implements OnInit, OnDestroy {
   private addFiles(files: FileList | null): void {
     if (!files || files.length === 0) return;
     const accepted: PendingImage[] = [];
-    let problem: string | null = null;
+    const problems: string[] = [];
 
     for (const file of Array.from(files)) {
       if (this.totalImages() + accepted.length >= MAX_IMAGES) {
-        problem = `Podés cargar hasta ${MAX_IMAGES} fotos por producto.`;
+        problems.push(`Podés cargar hasta ${MAX_IMAGES} fotos por producto.`);
         break;
       }
-      if (!file.type.startsWith('image/')) {
-        problem = `"${file.name}" no es una imagen (JPG, PNG, WEBP o GIF).`;
-        continue;
-      }
-      if (file.size > MAX_IMAGE_BYTES) {
-        problem = `"${file.name}" supera los 5 MB.`;
+      const reason = rejectReason(file);
+      if (reason) {
+        problems.push(reason);
         continue;
       }
       accepted.push({ file, previewUrl: URL.createObjectURL(file) });
     }
 
     this.pending.update((list) => [...list, ...accepted]);
-    this.error.set(problem);
+    // Every rejection is reported, not just the last one, so a mixed pick
+    // (one too big, one not an image) explains both.
+    this.error.set(problems.length > 0 ? problems.join(' ') : null);
   }
 
   // Object URLs hold the file in memory until released, which adds up on a
@@ -215,10 +225,16 @@ export class AdminDashboard implements OnInit, OnDestroy {
     this.error.set(null);
 
     // Upload every new photo first, then persist the product with the full
-    // list (kept stored photos + new URLs) in display order.
+    // list (kept stored photos + new URLs) in display order. The uploaded
+    // URLs are moved into the form *before* persisting, so if the save itself
+    // fails a retry reuses them instead of uploading the same files again.
     const uploads = this.pending().map((entry) => this.productService.uploadImage(entry.file));
     (uploads.length > 0 ? forkJoin(uploads) : of([])).subscribe({
-      next: (results) => this.persist(f, [...f.images, ...results.map((r) => r.imageUrl)]),
+      next: (results) => {
+        f.images = [...f.images, ...results.map((r) => r.imageUrl)];
+        this.clearPending();
+        this.persist(f, f.images);
+      },
       error: () => {
         this.saving.set(false);
         this.error.set('No se pudo subir alguna de las imágenes.');
@@ -243,7 +259,6 @@ export class AdminDashboard implements OnInit, OnDestroy {
     request.subscribe({
       next: () => {
         this.saving.set(false);
-        this.clearPending();
         this.showForm.set(false);
         this.fetchProducts();
       },

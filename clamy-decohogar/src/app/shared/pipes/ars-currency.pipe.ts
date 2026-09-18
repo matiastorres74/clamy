@@ -12,7 +12,9 @@ export function formatArsCurrency(value: number): string {
 
 @Pipe({ name: 'arsCurrency' })
 export class ArsCurrencyPipe implements PipeTransform {
-  transform(value: number): string {
-    return formatArsCurrency(value);
+  // Price is optional on the model (public responses omit it), so render a
+  // dash rather than "$ NaN" if it is ever missing.
+  transform(value: number | null | undefined): string {
+    return typeof value === 'number' ? formatArsCurrency(value) : '—';
   }
 }
