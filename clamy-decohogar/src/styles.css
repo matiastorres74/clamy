@@ -14,8 +14,29 @@
   --glow: 0 0 24px rgba(255, 255, 255, 0.12);
   --glow-strong: 0 0 40px rgba(255, 255, 255, 0.22);
   --radius: 2px;
+
+  /* The page loads at initial-scale=0.8 (see index.html), so on a mobile
+     browser one CSS pixel is painted at 80% of its usual physical size. Body
+     copy and headings are meant to shrink — that is the point of the zoom-out
+     — but controls and the smallest labels were already at their floor, so
+     those multiply by --zoom-fix to keep the physical size they had before.
+     Desktop browsers ignore initial-scale, hence the pointer: coarse guard:
+     with a mouse everything stays exactly as it was. */
+  --zoom-fix: 1;
+  --tap-min: auto;
+  --text-label: 0.75rem;
   --font-display: 'Montserrat', 'Inter', sans-serif;
   --font-body: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+}
+
+/* 1 / 0.8 = 1.25, cancelling the initial scale for the elements that opt in. */
+@media (pointer: coarse) {
+  :root {
+    --zoom-fix: 1.25;
+    --tap-min: 55px;
+    --text-label: calc(0.75rem * 1.25);
+  }
 }
 
 * {
@@ -84,7 +105,7 @@ img {
 
 .eyebrow {
   font-family: var(--font-display);
-  font-size: 0.75rem;
+  font-size: var(--text-label);
   letter-spacing: 0.35em;
   text-transform: uppercase;
   color: var(--text-faint);
@@ -95,9 +116,10 @@ img {
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  min-height: var(--tap-min);
   padding: 0.85rem 1.75rem;
   font-family: var(--font-display);
-  font-size: 0.8rem;
+  font-size: calc(0.8rem * var(--zoom-fix));
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -161,9 +183,11 @@ select {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   color: var(--text);
+  min-height: var(--tap-min);
   padding: 0.75rem 1rem;
   border-radius: var(--radius);
-  font-size: 0.95rem;
+  /* >=16px keeps iOS Safari from auto-zooming the page on focus. */
+  font-size: 1rem;
   width: 100%;
 }
 
@@ -176,7 +200,7 @@ select:focus {
 }
 
 label {
-  font-size: 0.8rem;
+  font-size: var(--text-label);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-faint);
