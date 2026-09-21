@@ -21,6 +21,10 @@
 
   @if (loading()) {
     <p class="muted">Cargando productos...</p>
+  } @else if (failed()) {
+    <p class="muted" role="alert">
+      No pudimos cargar el catálogo. Revisá tu conexión y volvé a intentar.
+    </p>
   } @else if (products().length === 0) {
     <p class="muted">No se encontraron productos con esos filtros.</p>
   } @else {

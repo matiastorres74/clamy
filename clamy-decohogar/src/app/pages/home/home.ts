@@ -44,6 +44,7 @@ export class Home implements OnInit, OnDestroy {
   protected whatsappUrl = `https://wa.me/${environment.whatsappNumber}`;
   protected featured = signal<Product[]>([]);
   protected loading = signal(true);
+  protected failed = signal(false);
 
   protected heroSlides: HeroSlide[] = [
     { type: 'image', src: 'assets/hero-3.jpg' },
@@ -91,7 +92,12 @@ export class Home implements OnInit, OnDestroy {
           this.featured.set(products.slice(0, FEATURED_COUNT));
           this.loading.set(false);
         },
-        error: () => this.loading.set(false),
+        // Without this the section showed "no products yet" when the API was
+        // down, which is indistinguishable from an empty catalogue.
+        error: () => {
+          this.failed.set(true);
+          this.loading.set(false);
+        },
       });
 
     const prefersReducedMotion =
