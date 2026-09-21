@@ -102,11 +102,25 @@ export class AdminDashboard implements OnInit, OnDestroy {
     });
   }
 
+  // The panel is toggled with a signal rather than a route change, so the
+  // router's scroll handling never fires here: opening the form from halfway
+  // down the product table left it off-screen above the viewport. The panel
+  // renders directly under the page header, so scrolling the window to the
+  // top reveals it. The scroll is deferred to the next task because inserting
+  // the panel above the current position makes the browser's scroll anchoring
+  // restore the old offset, which cancels a scroll started in the same tick,
+  // and it jumps rather than animating because a smooth scroll starting from
+  // the same tick as that insertion was getting cancelled part-way.
+  private revealForm(): void {
+    this.showForm.set(true);
+    setTimeout(() => window.scrollTo(0, 0));
+  }
+
   openCreateForm(): void {
     this.form = emptyForm();
     this.clearPending();
     this.error.set(null);
-    this.showForm.set(true);
+    this.revealForm();
   }
 
   openEditForm(product: Product): void {
@@ -121,7 +135,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
     };
     this.clearPending();
     this.error.set(null);
-    this.showForm.set(true);
+    this.revealForm();
   }
 
   closeForm(): void {
