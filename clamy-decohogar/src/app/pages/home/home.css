@@ -96,8 +96,8 @@
 }
 
 .hero-dot {
-  width: 24px;
-  height: 24px;
+  width: calc(24px * var(--zoom-fix));
+  height: calc(24px * var(--zoom-fix));
   display: flex;
   align-items: center;
   justify-content: center;

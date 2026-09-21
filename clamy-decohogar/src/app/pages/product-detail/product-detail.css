@@ -3,9 +3,11 @@
 }
 
 .back-link {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min);
   color: var(--text-faint);
-  font-size: 0.85rem;
+  font-size: calc(0.85rem * var(--zoom-fix));
   margin-bottom: 2rem;
   transition: color 0.2s ease;
 }
@@ -87,7 +89,7 @@
 }
 
 .placeholder-caption {
-  font-size: 0.7rem;
+  font-size: calc(0.7rem * var(--zoom-fix));
   color: var(--text-dim);
 }
 
@@ -95,8 +97,8 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
+  width: calc(44px * var(--zoom-fix));
+  height: calc(44px * var(--zoom-fix));
   display: flex;
   align-items: center;
   justify-content: center;
@@ -128,7 +130,7 @@
   bottom: 0.75rem;
   padding: 0.3rem 0.6rem;
   font-family: var(--font-display);
-  font-size: 0.7rem;
+  font-size: calc(0.7rem * var(--zoom-fix));
   letter-spacing: 0.15em;
   border-radius: var(--radius);
   background: rgba(5, 5, 6, 0.55);
@@ -152,8 +154,8 @@
 
 .gallery-thumb {
   flex: 0 0 auto;
-  width: 64px;
-  height: 80px;
+  width: calc(64px * var(--zoom-fix));
+  height: calc(80px * var(--zoom-fix));
   padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -216,12 +218,11 @@
 
 .detail-actions .btn {
   flex: 1 1 auto;
-  min-height: 48px;
 }
 
 .detail-note {
   margin-top: 1rem;
-  font-size: 0.8rem;
+  font-size: calc(0.8rem * var(--zoom-fix));
   color: var(--text-faint);
 }
 
