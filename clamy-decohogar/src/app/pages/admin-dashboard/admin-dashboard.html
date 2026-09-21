@@ -175,10 +175,10 @@
                   <div class="thumb-placeholder" aria-label="Sin foto">—</div>
                 }
               </td>
-              <td>{{ product.name }}</td>
-              <td>{{ categoryLabel(product.category) }}</td>
-              <td>{{ product.price | arsCurrency }}</td>
-              <td>{{ product.featured ? 'Sí' : '—' }}</td>
+              <td class="name-cell">{{ product.name }}</td>
+              <td data-label="Categoría">{{ categoryLabel(product.category) }}</td>
+              <td data-label="Precio">{{ product.price | arsCurrency }}</td>
+              <td data-label="Destacado">{{ product.featured ? 'Sí' : '—' }}</td>
               <td class="actions-cell">
                 <button class="link-btn" type="button" (click)="openEditForm(product)">Editar</button>
                 <button class="link-btn danger" type="button" (click)="remove(product)">Eliminar</button>
