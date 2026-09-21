@@ -148,7 +148,9 @@
   opacity: 0;
   visibility: hidden;
   transform: translateY(-6px);
-  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s;
+  /* visibility flips instantly when opening so the menu is focusable right
+     away, and is delayed when closing so the fade-out stays visible. */
+  transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
   box-shadow: var(--glow);
   z-index: 60;
 }
@@ -159,6 +161,7 @@
   opacity: 1;
   visibility: visible;
   transform: translateY(0);
+  transition-delay: 0s;
 }
 
 .dropdown-link {

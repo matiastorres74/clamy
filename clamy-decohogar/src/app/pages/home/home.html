@@ -56,6 +56,10 @@
 
   @if (loading()) {
     <p class="muted">Cargando productos...</p>
+  } @else if (failed()) {
+    <p class="muted" role="alert">
+      No pudimos cargar los destacados. Revisá tu conexión y volvé a intentar.
+    </p>
   } @else if (featured().length === 0) {
     <p class="muted">Todavía no hay productos cargados.</p>
   } @else {

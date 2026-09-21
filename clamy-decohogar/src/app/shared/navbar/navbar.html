@@ -40,11 +40,18 @@
         Inicio
       </a>
 
-      <div class="nav-dropdown" [class.open]="categoriesOpen()">
+      <div
+        class="nav-dropdown"
+        [class.open]="categoriesOpen()"
+        (keydown.arrowDown)="moveCategoryFocus($event, 1)"
+        (keydown.arrowUp)="moveCategoryFocus($event, -1)"
+      >
         <button
+          #categoriesTrigger
           class="nav-link nav-dropdown-trigger"
           type="button"
           (click)="toggleCategories()"
+          (keydown.arrowDown)="openCategoriesFromKeyboard($event)"
           aria-haspopup="true"
           [attr.aria-expanded]="categoriesOpen()"
         >
@@ -53,7 +60,7 @@
             <path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round" />
           </svg>
         </button>
-        <div class="dropdown-menu">
+        <div #categoriesMenu class="dropdown-menu">
           @for (cat of categories; track cat.id) {
             <a
               class="dropdown-link"
@@ -92,14 +99,21 @@
           <a routerLink="/admin" class="admin-pill">Admin</a>
         }
 
-        <button class="menu-toggle" (click)="toggleMenu()" aria-label="Menú">
+        <button
+          #menuToggle
+          class="menu-toggle"
+          type="button"
+          (click)="toggleMenu()"
+          aria-label="Menú"
+          [attr.aria-expanded]="menuOpen()"
+        >
           <span></span><span></span><span></span>
         </button>
       </div>
     </div>
 
     @if (menuOpen()) {
-      <nav class="mobile-nav">
+      <nav #mobileNav class="mobile-nav">
         <a
           class="nav-link"
           routerLink="/"
