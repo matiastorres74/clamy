@@ -13,6 +13,7 @@
 
 .admin-header-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.75rem;
 }
 
@@ -287,6 +288,77 @@
 
 .link-btn.danger:hover {
   color: var(--danger);
+}
+
+/* Below this width the table needed horizontal scrolling to reach the last
+   column, which is where Editar/Eliminar live — the two things the admin is
+   here to do. Each row becomes a stacked card instead, so every action is
+   reachable without sideways scrolling. */
+@media (max-width: 700px) {
+  .table-wrapper {
+    overflow-x: visible;
+    padding: 0.75rem;
+  }
+
+  .admin-table thead {
+    display: none;
+  }
+
+  .admin-table,
+  .admin-table tbody,
+  .admin-table tr,
+  .admin-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-table tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.9rem;
+  }
+
+  .admin-table tr + tr {
+    margin-top: 0.75rem;
+  }
+
+  .admin-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.3rem 0;
+    border: none;
+    white-space: normal;
+  }
+
+  .admin-table td[data-label]::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: var(--text-label);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-faint);
+  }
+
+  .name-cell {
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+  }
+
+  .actions-cell {
+    justify-content: flex-start;
+    gap: 1.5rem;
+    margin-top: 0.4rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  /* Two full-width buttons stacked beat one of them running past the
+     container's padding and touching the screen edge. */
+  .admin-header-actions .btn {
+    flex: 1 1 100%;
+  }
 }
 
 @media (min-width: 701px) {
