@@ -237,13 +237,17 @@ label {
 
 .product-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 3.5rem 2rem;
+  /* Two columns from the narrowest screen up, so the catalogue reads as a
+     gallery wall rather than a single stack. At initial-scale=0.8 even a
+     320px phone reports 400 CSS px, which still leaves ~160px per card. The
+     column gap is tighter here and opens up once there is room for it. */
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2.5rem 1rem;
 }
 
 @media (min-width: 561px) {
   .product-grid {
-    grid-template-columns: repeat(2, 1fr);
+    gap: 3.5rem 2rem;
   }
 }
 
