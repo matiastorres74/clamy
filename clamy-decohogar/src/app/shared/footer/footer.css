@@ -41,7 +41,7 @@
 }
 
 .footer p {
-  font-size: calc(0.85rem * var(--zoom-fix));
+  font-size: 0.85rem;
   margin-bottom: 0.5rem;
 }
 
@@ -68,13 +68,13 @@
   color: var(--text-faint);
 }
 
-@media (min-width: 501px) {
+@media (width > 31.25em) {
   .footer-grid {
     grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (min-width: 801px) {
+@media (width > 50em) {
   .footer-grid {
     grid-template-columns: 1.4fr 1fr 1fr 1fr;
   }
