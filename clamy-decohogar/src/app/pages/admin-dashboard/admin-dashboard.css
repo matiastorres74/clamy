@@ -110,7 +110,7 @@
 
 .uploader-title {
   font-family: var(--font-display);
-  font-size: calc(0.8rem * var(--zoom-fix));
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   text-transform: uppercase;
@@ -118,7 +118,7 @@
 }
 
 .uploader-hint {
-  font-size: calc(0.8rem * var(--zoom-fix));
+  font-size: 0.8rem;
   line-height: 1.4;
   letter-spacing: normal;
   text-transform: none;
@@ -178,7 +178,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: calc(0.85rem * var(--zoom-fix));
+  font-size: 0.85rem;
 }
 
 .uploader-item-actions {
@@ -191,7 +191,7 @@
 .uploader-mini {
   min-height: var(--tap-min);
   padding: 0.4rem 0.9rem;
-  font-size: calc(0.65rem * var(--zoom-fix));
+  font-size: 0.65rem;
   letter-spacing: 0.12em;
 }
 
@@ -204,7 +204,7 @@
 
 /* On phones the save/cancel pair stretches instead of crowding right; the
    .btn base rule already guarantees the tap height. */
-@media (max-width: 700px) {
+@media (width <= 43.75em) {
   .form-actions .btn {
     flex: 1;
   }
@@ -215,7 +215,7 @@
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid var(--border-strong);
   padding: 0.6rem 0.8rem;
-  font-size: calc(0.85rem * var(--zoom-fix));
+  font-size: 0.85rem;
   border-radius: var(--radius);
   margin-top: 1.25rem;
 }
@@ -247,8 +247,8 @@
 
 .thumb-cell img,
 .thumb-placeholder {
-  width: calc(44px * var(--zoom-fix));
-  height: calc(44px * var(--zoom-fix));
+  width: 44px;
+  height: 44px;
   border-radius: var(--radius);
 }
 
@@ -277,7 +277,7 @@
   border: none;
   color: var(--text-dim);
   cursor: pointer;
-  font-size: calc(0.85rem * var(--zoom-fix));
+  font-size: 0.85rem;
   text-decoration: underline;
   padding: 0;
 }
@@ -294,7 +294,7 @@
    column, which is where Editar/Eliminar live — the two things the admin is
    here to do. Each row becomes a stacked card instead, so every action is
    reachable without sideways scrolling. */
-@media (max-width: 700px) {
+@media (width <= 43.75em) {
   .table-wrapper {
     overflow-x: visible;
     padding: 0.75rem;
@@ -361,7 +361,7 @@
   }
 }
 
-@media (min-width: 701px) {
+@media (width > 43.75em) {
   .form-grid {
     grid-template-columns: 1fr 1fr;
   }

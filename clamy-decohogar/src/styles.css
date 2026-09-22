@@ -15,14 +15,10 @@
   --glow-strong: 0 0 40px rgba(255, 255, 255, 0.22);
   --radius: 2px;
 
-  /* The page loads at initial-scale=0.8 (see index.html), so on a mobile
-     browser one CSS pixel is painted at 80% of its usual physical size. Body
-     copy and headings are meant to shrink — that is the point of the zoom-out
-     — but controls and the smallest labels were already at their floor, so
-     those multiply by --zoom-fix to keep the physical size they had before.
-     Desktop browsers ignore initial-scale, hence the pointer: coarse guard:
-     with a mouse everything stays exactly as it was. */
-  --zoom-fix: 1;
+  /* Sizes are in rem so they follow the reader's default font size, and
+     breakpoints are in em for the same reason: someone who sets 20px text in
+     the browser gets the narrower layout early instead of text spilling out
+     of a desktop grid. At the default 16px both behave exactly like px. */
   --tap-min: auto;
   --text-label: 0.75rem;
   --font-display: 'Montserrat', 'Inter', sans-serif;
@@ -30,12 +26,10 @@
 
 }
 
-/* 1 / 0.8 = 1.25, cancelling the initial scale for the elements that opt in. */
+/* 44px (WCAG 2.5.5) hit areas wherever the pointer is a finger. */
 @media (pointer: coarse) {
   :root {
-    --zoom-fix: 1.25;
-    --tap-min: 55px;
-    --text-label: calc(0.75rem * 1.25);
+    --tap-min: 2.75rem;
   }
 }
 
@@ -98,9 +92,11 @@ img {
 
 .container {
   width: 100%;
-  max-width: 1200px;
+  max-width: 75rem;
   margin: 0 auto;
-  padding-inline: 1.5rem;
+  /* 1.5rem from 400px up; narrower screens (or 400% zoom) give the gutter
+     back to the content. */
+  padding-inline: clamp(1rem, 6vw, 1.5rem);
 }
 
 .eyebrow {
@@ -119,7 +115,7 @@ img {
   min-height: var(--tap-min);
   padding: 0.85rem 1.75rem;
   font-family: var(--font-display);
-  font-size: calc(0.8rem * var(--zoom-fix));
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
@@ -129,7 +125,14 @@ img {
   color: var(--text);
   cursor: pointer;
   transition: all 0.25s ease;
-  white-space: nowrap;
+  /* Labels may wrap: a nowrap "Ver más de Iluminación y decoración" set the
+     min-content width of its column and pushed the product page 670px wide
+     at any viewport below that (200% zoom and up). */
+  max-width: 100%;
+  text-align: center;
+  /* break-word, not anywhere: "anywhere" also lowers min-content, which let
+     flex rows squeeze "Buscar" into "Busca/r". */
+  overflow-wrap: break-word;
 }
 
 .btn:hover {
@@ -238,14 +241,15 @@ label {
 .product-grid {
   display: grid;
   /* Two columns from the narrowest screen up, so the catalogue reads as a
-     gallery wall rather than a single stack. At initial-scale=0.8 even a
-     320px phone reports 400 CSS px, which still leaves ~160px per card. The
-     column gap is tighter here and opens up once there is room for it. */
-  grid-template-columns: repeat(2, 1fr);
+     gallery wall rather than a single stack; a 320px viewport (a small phone,
+     or a laptop at 400% zoom) still leaves ~135px per card. minmax(0, …)
+     keeps a long unbreakable word from widening one column past the other.
+     The column gap is tighter here and opens up once there is room for it. */
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 2.5rem 1rem;
 }
 
-@media (min-width: 561px) {
+@media (width > 35em) {
   .product-grid {
     gap: 3.5rem 2rem;
   }
@@ -253,9 +257,9 @@ label {
 
 /* Three columns instead of four: the photograph is the product now, so each
    one gets ~33% more width at desktop sizes. */
-@media (min-width: 1001px) {
+@media (width > 62.5em) {
   .product-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 4rem 2.5rem;
   }
 }

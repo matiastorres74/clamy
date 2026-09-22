@@ -104,7 +104,7 @@
   display: inline-flex;
   align-items: center;
   min-height: var(--tap-min);
-  font-size: calc(0.8rem * var(--zoom-fix));
+  font-size: 0.8rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-dim);
@@ -137,7 +137,7 @@
   top: 100%;
   left: 0;
   margin-top: 0.85rem;
-  min-width: 190px;
+  min-width: 12rem;
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -145,6 +145,10 @@
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
+  /* Same reasoning as .mobile-nav: a desktop window zoomed to 200% can be
+     shorter than the category list. */
+  max-height: calc(100svh - 6rem);
+  overflow-y: auto;
   opacity: 0;
   visibility: hidden;
   transform: translateY(-6px);
@@ -169,7 +173,7 @@
   align-items: center;
   min-height: var(--tap-min);
   padding: 0.55rem 0.75rem;
-  font-size: calc(0.78rem * var(--zoom-fix));
+  font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--text-dim);
@@ -196,7 +200,7 @@
   min-height: var(--tap-min);
   border: 1px solid var(--border-strong);
   padding: 0.3rem 0.9rem;
-  font-size: calc(0.7rem * var(--zoom-fix));
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   border-radius: var(--radius);
@@ -235,15 +239,21 @@
   align-items: flex-start;
   gap: 1rem;
   padding: 1.25rem 1.5rem;
+  /* The menu hangs off a sticky header, so it never scrolls with the page:
+     in landscape or when zoomed, the last links would sit below the fold
+     for good. It scrolls on its own instead. */
+  max-height: calc(100svh - 5rem);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
-@media (min-width: 561px) {
+@media (width > 35em) {
   .topbar-search {
-    max-width: 320px;
+    max-width: 20rem;
   }
 }
 
-@media (min-width: 901px) {
+@media (width > 56.25em) {
   .navbar-inner {
     grid-template-columns: 1fr auto 1fr;
   }

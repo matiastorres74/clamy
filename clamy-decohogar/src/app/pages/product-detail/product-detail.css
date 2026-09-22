@@ -7,7 +7,7 @@
   align-items: center;
   min-height: var(--tap-min);
   color: var(--text-faint);
-  font-size: calc(0.85rem * var(--zoom-fix));
+  font-size: 0.85rem;
   margin-bottom: 2rem;
   transition: color 0.2s ease;
 }
@@ -18,9 +18,22 @@
 
 .detail {
   display: grid;
-  grid-template-columns: 1fr;
+  /* minmax(0, …): a bare 1fr column never shrinks below its min-content
+     width, so one long title word or CTA label could widen the page. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 2.5rem;
   align-items: start;
+}
+
+/* Stacked layout on a short viewport (phone in landscape, desktop at 200%):
+   a full-width 4:5 photo would be taller than the screen. Narrow it instead
+   of cropping, so the ratio holds and the whole photo fits in view. */
+@media (width <= 56.25em) {
+  .gallery {
+    width: 100%;
+    max-width: calc(80svh * 4 / 5);
+    margin-inline: auto;
+  }
 }
 
 /* ---- Gallery ------------------------------------------------------------
@@ -89,7 +102,7 @@
 }
 
 .placeholder-caption {
-  font-size: calc(0.7rem * var(--zoom-fix));
+  font-size: 0.7rem;
   color: var(--text-dim);
 }
 
@@ -97,8 +110,8 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: calc(44px * var(--zoom-fix));
-  height: calc(44px * var(--zoom-fix));
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -130,7 +143,7 @@
   bottom: 0.75rem;
   padding: 0.3rem 0.6rem;
   font-family: var(--font-display);
-  font-size: calc(0.7rem * var(--zoom-fix));
+  font-size: 0.7rem;
   letter-spacing: 0.15em;
   border-radius: var(--radius);
   background: rgba(5, 5, 6, 0.55);
@@ -154,8 +167,8 @@
 
 .gallery-thumb {
   flex: 0 0 auto;
-  width: calc(64px * var(--zoom-fix));
-  height: calc(80px * var(--zoom-fix));
+  width: 64px;
+  height: 80px;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -196,6 +209,8 @@
   letter-spacing: -0.01em;
   line-height: 1.15;
   margin-block: 0.75rem 1.5rem;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 /* The description is the copy that sells now that there is no price.
@@ -222,17 +237,21 @@
 
 .detail-note {
   margin-top: 1rem;
-  font-size: calc(0.8rem * var(--zoom-fix));
+  font-size: 0.8rem;
   color: var(--text-faint);
 }
 
-@media (min-width: 901px) {
+@media (width > 56.25em) {
   .detail {
     grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
     gap: 4rem;
   }
 
-  /* Keeps title and CTA in view while a long description scrolls past. */
+}
+
+/* Keeps title and CTA in view while a long description scrolls past — only
+   when the window is tall enough that pinning it cannot hide the CTA. */
+@media (width > 56.25em) and (height > 40em) {
   .detail-info {
     position: sticky;
     top: 6rem;

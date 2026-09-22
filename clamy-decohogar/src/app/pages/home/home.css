@@ -1,6 +1,11 @@
 .hero {
   position: relative;
   min-height: 70vh;
+  min-height: 70svh;
+  /* When zoom leaves the viewport shorter than the copy, the hero grows
+     instead of clipping; the padding keeps the text clear of the absolutely
+     placed dots and scroll cue at the bottom. */
+  padding-block: 5.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -58,7 +63,7 @@
 .hero-content {
   position: relative;
   z-index: 1;
-  max-width: 760px;
+  max-width: 47.5rem;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -74,7 +79,7 @@
 
 .hero-subtitle {
   font-size: 1.05rem;
-  max-width: 520px;
+  max-width: 32.5rem;
   margin-bottom: 2.25rem;
 }
 
@@ -96,8 +101,8 @@
 }
 
 .hero-dot {
-  width: calc(24px * var(--zoom-fix));
-  height: calc(24px * var(--zoom-fix));
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -166,9 +171,10 @@
   }
 }
 
-@media (min-width: 701px) {
+@media (width > 43.75em) {
   .hero {
     min-height: 88vh;
+    min-height: 88svh;
   }
 
   .hero-scroll {
@@ -200,16 +206,21 @@
   font-size: 1rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  overflow-wrap: break-word;
+  /* break-word does not lower the min-content width, so at 320px a single
+     long word ("ILUMINACIÓN") still spilled out of its tile. Hyphenate
+     first (lang="es-AR"), and break anywhere as a last resort. */
+  min-width: 0;
+  hyphens: auto;
+  overflow-wrap: anywhere;
 }
 
-@media (min-width: 601px) {
+@media (width > 37.5em) {
   .category-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
 
-@media (min-width: 1001px) {
+@media (width > 62.5em) {
   .category-grid {
     grid-template-columns: repeat(5, 1fr);
   }
