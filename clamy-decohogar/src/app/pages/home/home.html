@@ -1,20 +1,37 @@
 <section class="hero">
-  <div class="hero-media-stack" aria-hidden="true">
-    @for (slide of heroSlides; track slide.src; let i = $index) {
-      @if (slide.type === 'video') {
-        <video
-          #heroVideo
-          class="hero-slide"
-          [class.active]="i === activeSlide()"
-          [src]="slide.src"
-          muted
-          loop
-          playsinline
-          preload="metadata"
-        ></video>
-      } @else {
-        <div class="hero-slide" [class.active]="i === activeSlide()" [style.background-image]="'url(' + slide.src + ')'"></div>
-      }
+  <div class="hero-media" aria-hidden="true">
+    <!-- A real <img> rather than a CSS background, so the browser's preload
+         scanner finds it in the server-rendered HTML and fetches it first. -->
+    <picture>
+      <source
+        type="image/avif"
+        srcset="assets/hero/hero-3-640.avif 640w, assets/hero/hero-3-1280.avif 1280w, assets/hero/hero-3-1687.avif 1687w"
+        sizes="100vw"
+      />
+      <img
+        class="hero-image"
+        src="assets/hero/hero-3-1280.webp"
+        srcset="assets/hero/hero-3-640.webp 640w, assets/hero/hero-3-1280.webp 1280w, assets/hero/hero-3-1687.webp 1687w"
+        sizes="100vw"
+        width="1687"
+        height="1837"
+        alt=""
+        fetchpriority="high"
+      />
+    </picture>
+    @if (heroVideoSrc(); as src) {
+      <video
+        #heroVideo
+        class="hero-video"
+        [class.playing]="heroVideoPlaying()"
+        [src]="src"
+        muted
+        loop
+        playsinline
+        preload="auto"
+        (loadeddata)="onHeroVideoReady(heroVideo)"
+        (playing)="heroVideoPlaying.set(true)"
+      ></video>
     }
   </div>
   <div class="hero-overlay" aria-hidden="true"></div>
@@ -30,17 +47,25 @@
     </div>
   </div>
 
-  @if (heroSlides.length > 1) {
-    <div class="hero-dots">
-      @for (slide of heroSlides; track slide.src; let i = $index) {
-        <button
-          class="hero-dot"
-          [class.active]="i === activeSlide()"
-          (click)="selectSlide(i)"
-          [attr.aria-label]="'Ver imagen ' + (i + 1)"
-        ></button>
+  <!-- A looping video is moving content that runs past five seconds, so it
+       needs a way to stop it (WCAG 2.2.2). Shown only once it is playing. -->
+  @if (heroVideoPlaying()) {
+    <button
+      type="button"
+      class="hero-video-toggle"
+      (click)="toggleHeroVideo()"
+      [attr.aria-label]="heroVideoPausedByUser() ? 'Reproducir video' : 'Pausar video'"
+    >
+      @if (heroVideoPausedByUser()) {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M8 5v14l11-7z" />
+        </svg>
+      } @else {
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+        </svg>
       }
-    </div>
+    </button>
   }
 
   <a class="hero-scroll" href="#categorias">
@@ -55,7 +80,20 @@
   <h2 class="section-title">Destacados</h2>
 
   @if (loading()) {
-    <p class="muted">Cargando productos...</p>
+    <!-- Same grid and card proportions as the real cards, so nothing below
+         jumps when they arrive. -->
+    <!-- No aria-busy here: it tells screen readers to hold back announcements
+         from inside the container, which would mute the status line too. -->
+    <div class="product-grid">
+      <span class="visually-hidden" role="status">Cargando productos...</span>
+      @for (i of skeletonCards; track i) {
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="skeleton-media"></div>
+          <div class="skeleton-line skeleton-line-short"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      }
+    </div>
   } @else if (failed()) {
     <p class="muted" role="alert">
       No pudimos cargar los destacados. Revisá tu conexión y volvé a intentar.

@@ -76,6 +76,9 @@ export class AdminDashboard implements OnInit, OnDestroy {
   protected maxImages = MAX_IMAGES;
   protected products = signal<Product[]>([]);
   protected loading = signal(true);
+  protected loadFailed = signal(false);
+  /** Errors from actions on the table itself, shown outside the form panel. */
+  protected listError = signal<string | null>(null);
   protected showForm = signal(false);
   protected form: ProductFormState = emptyForm();
   protected pending = signal<PendingImage[]>([]);
@@ -93,12 +96,18 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   private fetchProducts(): void {
     this.loading.set(true);
+    this.loadFailed.set(false);
     this.productService.getAll().subscribe({
       next: (products) => {
         this.products.set(products);
         this.loading.set(false);
       },
-      error: () => this.loading.set(false),
+      // Leaving `products` empty on failure showed "you haven't added any
+      // products yet", which reads as if the catalogue had been wiped.
+      error: () => {
+        this.loadFailed.set(true);
+        this.loading.set(false);
+      },
     });
   }
 
@@ -285,7 +294,13 @@ export class AdminDashboard implements OnInit, OnDestroy {
 
   remove(product: Product): void {
     if (!confirm(`¿Eliminar "${product.name}"?`)) return;
-    this.productService.delete(product.id).subscribe(() => this.fetchProducts());
+    this.listError.set(null);
+    this.productService.delete(product.id).subscribe({
+      next: () => this.fetchProducts(),
+      // A failed delete used to do nothing at all, so the row just stayed
+      // and the admin couldn't tell whether to try again.
+      error: () => this.listError.set(`No se pudo eliminar "${product.name}". Probá de nuevo.`),
+    });
   }
 
   logout(): void {

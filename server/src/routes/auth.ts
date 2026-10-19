@@ -7,6 +7,12 @@ import { loginLimiter } from '../middleware/loginLimiter';
 
 export const authRouter = Router();
 
+// Compared against when the username doesn't exist. Answering that case
+// straight away skipped the ~100ms bcrypt check, so response time alone told
+// an attacker which usernames are real. Same cost factor (10) as the hashes
+// prisma/seed.ts stores, so both paths take the same time.
+const DUMMY_PASSWORD_HASH = '$2a$10$qYu3U0mezoNPiHERf5qTN.adGVIKt3l18vs5RhN9nxi1C62bD3bc6';
+
 authRouter.post('/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body ?? {};
 
@@ -15,12 +21,8 @@ authRouter.post('/login', loginLimiter, async (req, res) => {
   }
 
   const admin = await prisma.adminUser.findUnique({ where: { username } });
-  if (!admin) {
-    return res.status(401).json({ error: 'Invalid credentials' });
-  }
-
-  const valid = await bcrypt.compare(password, admin.passwordHash);
-  if (!valid) {
+  const valid = await bcrypt.compare(password, admin?.passwordHash ?? DUMMY_PASSWORD_HASH);
+  if (!admin || !valid) {
     return res.status(401).json({ error: 'Invalid credentials' });
   }
 

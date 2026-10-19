@@ -1,15 +1,14 @@
 import {
   Component,
+  DestroyRef,
   ElementRef,
-  OnDestroy,
   OnInit,
-  PLATFORM_ID,
-  ViewChild,
-  effect,
+  RESPONSE_INIT,
+  afterNextRender,
   inject,
   signal,
+  viewChild,
 } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { of, switchMap } from 'rxjs';
 import { ProductService } from '../../core/services/product';
@@ -17,14 +16,24 @@ import { ProductCard } from '../../shared/product-card/product-card';
 import { CATEGORIES, Product } from '../../core/models/product.model';
 import { environment } from '../../../environments/environment';
 
-const SLIDE_INTERVAL_MS = 6000;
 // How many products the "Destacados" section shows; two rows of the
 // three-column showroom grid.
 const FEATURED_COUNT = 6;
 
-interface HeroSlide {
-  type: 'image' | 'video';
-  src: string;
+const HERO_VIDEO_SRC = 'assets/hero-4.mp4';
+
+// The hero used to be a two-slide carousel: this photo, then a 2.3MB video
+// six seconds later. The photo is now the hero and the paint the page is
+// judged on, and the video is an upgrade layered on top once the page has
+// finished loading — so it never competes with the photo for bandwidth.
+// Below this width (the same breakpoint where the hero grows to 88svh) a
+// phone pays for the video on mobile data and barely sees it behind the
+// overlay, so it keeps the still.
+const HERO_VIDEO_MEDIA = '(min-width: 43.75em) and (prefers-reduced-motion: no-preference)';
+
+interface NetworkInformationLike {
+  saveData?: boolean;
+  effectiveType?: string;
 }
 
 @Component({
@@ -33,41 +42,54 @@ interface HeroSlide {
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
-export class Home implements OnInit, OnDestroy {
+export class Home implements OnInit {
   private productService = inject(ProductService);
-  private isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
-  private slideTimer?: ReturnType<typeof setInterval>;
+  private destroyRef = inject(DestroyRef);
+  private responseInit = inject(RESPONSE_INIT, { optional: true });
 
-  @ViewChild('heroVideo') private heroVideoRef?: ElementRef<HTMLVideoElement>;
+  private heroVideo = viewChild<ElementRef<HTMLVideoElement>>('heroVideo');
 
   protected categories = CATEGORIES;
   protected whatsappUrl = `https://wa.me/${environment.whatsappNumber}`;
   protected featured = signal<Product[]>([]);
   protected loading = signal(true);
   protected failed = signal(false);
+  protected skeletonCards = Array.from({ length: FEATURED_COUNT }, (_, i) => i);
 
-  protected heroSlides: HeroSlide[] = [
-    { type: 'image', src: 'assets/hero-3.jpg' },
-    { type: 'video', src: 'assets/hero-4.mp4' },
-  ];
-  protected activeSlide = signal(0);
+  // Null on the server and until the page has loaded, so the SSR markup holds
+  // no <video> and the browser never starts fetching it during first paint.
+  protected heroVideoSrc = signal<string | null>(null);
+  protected heroVideoPlaying = signal(false);
+  // Set only by the pause button. Hiding the tab also pauses the video, but
+  // must not override a visitor who chose to stop it.
+  protected heroVideoPausedByUser = signal(false);
 
   constructor() {
-    effect(() => {
-      // Read the signal unconditionally first so this effect keeps a
-      // dependency on it even on early runs where the video isn't
-      // rendered yet — otherwise it never re-runs when the slide changes.
-      const activeSlide = this.activeSlide();
-      const video = this.heroVideoRef?.nativeElement;
-      if (!video) return;
+    afterNextRender(() => {
+      if (!this.shouldLoadHeroVideo()) return;
 
-      const videoSlideIndex = this.heroSlides.findIndex((s) => s.type === 'video');
-      if (activeSlide === videoSlideIndex) {
-        video.currentTime = 0;
-        video.play().catch(() => {});
+      const load = () => this.heroVideoSrc.set(HERO_VIDEO_SRC);
+      if (document.readyState === 'complete') {
+        load();
       } else {
-        video.pause();
+        window.addEventListener('load', load, { once: true });
+        this.destroyRef.onDestroy(() => window.removeEventListener('load', load));
       }
+
+      // Decoding video in a background tab burns battery for nobody.
+      const onVisibilityChange = () => {
+        const video = this.heroVideo()?.nativeElement;
+        if (!video || this.heroVideoPausedByUser()) return;
+        if (document.hidden) {
+          video.pause();
+        } else {
+          video.play().catch(() => {});
+        }
+      };
+      document.addEventListener('visibilitychange', onVisibilityChange);
+      this.destroyRef.onDestroy(() =>
+        document.removeEventListener('visibilitychange', onVisibilityChange),
+      );
     });
   }
 
@@ -81,7 +103,9 @@ export class Home implements OnInit, OnDestroy {
       .getAll({ featured: true, limit: FEATURED_COUNT })
       .pipe(
         switchMap((featured) =>
-          featured.length > 0 ? of(featured) : this.productService.getAll({ limit: FEATURED_COUNT }),
+          featured.length > 0
+            ? of(featured)
+            : this.productService.getAll({ limit: FEATURED_COUNT }),
         ),
       )
       .subscribe({
@@ -97,26 +121,39 @@ export class Home implements OnInit, OnDestroy {
         error: () => {
           this.failed.set(true);
           this.loading.set(false);
+          // Server-side only (null in the browser). Answered as 200, the CDN
+          // cached this error page and served it to every visitor for ten
+          // minutes after a momentary API failure; a 503 is never cached.
+          if (this.responseInit) this.responseInit.status = 503;
         },
       });
+  }
 
-    const prefersReducedMotion =
-      this.isBrowser && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  protected onHeroVideoReady(video: HTMLVideoElement): void {
+    // The element is created client-side, where the static `muted` attribute
+    // does not set the property autoplay policies check — so set it here.
+    video.muted = true;
+    if (document.hidden || this.heroVideoPausedByUser()) return;
+    video.play().catch(() => {});
+  }
 
-    if (this.isBrowser && !prefersReducedMotion && this.heroSlides.length > 1) {
-      this.slideTimer = setInterval(() => {
-        this.activeSlide.update((i) => (i + 1) % this.heroSlides.length);
-      }, SLIDE_INTERVAL_MS);
+  protected toggleHeroVideo(): void {
+    const video = this.heroVideo()?.nativeElement;
+    if (!video) return;
+    if (video.paused) {
+      this.heroVideoPausedByUser.set(false);
+      video.play().catch(() => {});
+    } else {
+      this.heroVideoPausedByUser.set(true);
+      video.pause();
     }
   }
 
-  ngOnDestroy(): void {
-    if (this.slideTimer) {
-      clearInterval(this.slideTimer);
-    }
-  }
-
-  selectSlide(index: number): void {
-    this.activeSlide.set(index);
+  private shouldLoadHeroVideo(): boolean {
+    if (!window.matchMedia(HERO_VIDEO_MEDIA).matches) return false;
+    const connection = (navigator as Navigator & { connection?: NetworkInformationLike })
+      .connection;
+    if (connection?.saveData) return false;
+    return !/(^|-)2g$/.test(connection?.effectiveType ?? '');
   }
 }
