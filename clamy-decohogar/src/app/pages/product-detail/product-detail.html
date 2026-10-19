@@ -5,6 +5,10 @@
     <p class="muted">Cargando producto...</p>
   } @else if (notFound()) {
     <p class="muted">No encontramos este producto.</p>
+  } @else if (failed()) {
+    <p class="muted" role="alert">
+      No pudimos cargar el producto. Revisá tu conexión y volvé a intentar.
+    </p>
   } @else if (product(); as p) {
     <article class="detail">
       <div

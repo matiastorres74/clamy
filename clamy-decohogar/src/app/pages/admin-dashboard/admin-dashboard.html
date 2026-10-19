@@ -148,8 +148,16 @@
     </div>
   }
 
+  @if (listError()) {
+    <p class="error-text" role="alert">{{ listError() }}</p>
+  }
+
   @if (loading()) {
     <p class="muted">Cargando productos...</p>
+  } @else if (loadFailed()) {
+    <p class="error-text" role="alert">
+      No pudimos cargar los productos. Revisá tu conexión y recargá la página.
+    </p>
   } @else if (products().length === 0) {
     <p class="muted">Todavía no cargaste ningún producto.</p>
   } @else {

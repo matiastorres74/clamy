@@ -1,4 +1,14 @@
-import { Component, ElementRef, OnInit, ViewChild, computed, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  OnInit,
+  RESPONSE_INIT,
+  ViewChild,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProductService } from '../../core/services/product';
 import { categoryLabel, Product } from '../../core/models/product.model';
@@ -13,6 +23,7 @@ import { environment } from '../../../environments/environment';
 export class ProductDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private productService = inject(ProductService);
+  private responseInit = inject(RESPONSE_INIT, { optional: true });
   protected categoryLabel = categoryLabel;
 
   @ViewChild('track') private track?: ElementRef<HTMLElement>;
@@ -20,6 +31,7 @@ export class ProductDetail implements OnInit {
   protected product = signal<Product | null>(null);
   protected loading = signal(true);
   protected notFound = signal(false);
+  protected failed = signal(false);
 
   protected images = computed(() => this.product()?.images ?? []);
   protected activeIndex = signal(0);
@@ -44,8 +56,19 @@ export class ProductDetail implements OnInit {
         this.product.set(product);
         this.loading.set(false);
       },
-      error: () => {
-        this.notFound.set(true);
+      // Only the API's 404 (or 400 for a non-numeric id) means the product
+      // doesn't exist; anything else is an outage, which used to be reported
+      // as "we couldn't find this product".
+      error: (err: unknown) => {
+        const status = err instanceof HttpErrorResponse ? err.status : 0;
+        if (status === 404 || status === 400) {
+          this.notFound.set(true);
+          // Server-side only (null in the browser): without this a deleted
+          // product's URL answered 200 and stayed indexed by search engines.
+          if (this.responseInit) this.responseInit.status = 404;
+        } else {
+          this.failed.set(true);
+        }
         this.loading.set(false);
       },
     });
