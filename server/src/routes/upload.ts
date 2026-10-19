@@ -1,18 +1,24 @@
 import { Request, Response, Router } from 'express';
 import multer from 'multer';
-import path from 'node:path';
 import crypto from 'node:crypto';
 import { put } from '@vercel/blob';
 import { blobToken } from '../lib/env';
 import { requireAdmin } from '../middleware/requireAdmin';
 
-const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+// The stored name's extension comes from here, not from the uploaded file's
+// name, so "photo.html" sent as image/png is still saved as .png.
+const EXTENSION_BY_MIME_TYPE: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+  'image/gif': '.gif',
+};
 
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+    if (!Object.hasOwn(EXTENSION_BY_MIME_TYPE, file.mimetype)) {
       return cb(new Error('Only JPEG, PNG, WEBP or GIF images are allowed'));
     }
     cb(null, true);
@@ -45,7 +51,7 @@ uploadRouter.post('/', requireAdmin, async (req, res) => {
 
   // A failure here now propagates to the global error handler in app.ts,
   // which logs it and answers 500 instead of leaving the request hanging.
-  const ext = path.extname(req.file.originalname).toLowerCase();
+  const ext = EXTENSION_BY_MIME_TYPE[req.file.mimetype];
   // `access: 'public'` is deliberate: the storefront renders these URLs in
   // plain <img> tags for anonymous visitors, so the store itself must be
   // public too — a private store rejects this call outright.

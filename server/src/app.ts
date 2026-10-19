@@ -12,6 +12,13 @@ import { uploadRouter } from './routes/upload';
 export function createApp() {
   const app = express();
 
+  // Both deployments put exactly one proxy in front of Express (Vercel's edge,
+  // or nginx in docker-compose). Without this, req.ip was that proxy's address
+  // for every visitor, so the login rate limiter kept a single shared bucket:
+  // ten wrong passwords from anyone locked the real admin out. Trusting one hop
+  // reads the client from the X-Forwarded-For entry the proxy itself appended.
+  app.set('trust proxy', 1);
+
   app.use(helmet());
   app.use(cors({ origin: env.CORS_ORIGIN }));
   app.use(express.json());
@@ -38,6 +45,20 @@ export function createApp() {
   // database hiccup returns a 500 instead of crashing the process. Logged as
   // structured JSON so Vercel's log explorer can filter/search on it.
   app.use((err: unknown, req: Request, res: Response, _next: NextFunction) => {
+    // express.json() rejects malformed or oversized bodies with an http-errors
+    // style error (status 400/413, `expose: true`). Those are the client's
+    // fault: answer with their status instead of logging a 500 for each one.
+    const clientError = (err ?? {}) as { status?: unknown; expose?: unknown; message?: unknown };
+    if (
+      typeof err === 'object' &&
+      typeof clientError.status === 'number' &&
+      clientError.status >= 400 &&
+      clientError.status < 500 &&
+      clientError.expose === true
+    ) {
+      return res.status(clientError.status).json({ error: String(clientError.message) });
+    }
+
     console.error(
       JSON.stringify({
         timestamp: new Date().toISOString(),
