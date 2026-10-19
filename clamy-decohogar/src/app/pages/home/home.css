@@ -191,6 +191,45 @@
   padding-block: 4rem;
 }
 
+/* Mirrors the product card: a 4:5 photo, then a category line and a title. */
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.skeleton-card > * {
+  background: var(--surface);
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+.skeleton-media {
+  aspect-ratio: 4 / 5;
+  margin-bottom: 0.5rem;
+}
+
+.skeleton-line {
+  height: 0.9rem;
+  width: 75%;
+}
+
+.skeleton-line-short {
+  height: 0.6rem;
+  width: 40%;
+}
+
+@keyframes skeleton-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton-card > * {
+    animation: none;
+  }
+}
+
 .category-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

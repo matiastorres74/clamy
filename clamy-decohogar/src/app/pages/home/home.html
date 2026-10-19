@@ -80,7 +80,20 @@
   <h2 class="section-title">Destacados</h2>
 
   @if (loading()) {
-    <p class="muted">Cargando productos...</p>
+    <!-- Same grid and card proportions as the real cards, so nothing below
+         jumps when they arrive. -->
+    <!-- No aria-busy here: it tells screen readers to hold back announcements
+         from inside the container, which would mute the status line too. -->
+    <div class="product-grid">
+      <span class="visually-hidden" role="status">Cargando productos...</span>
+      @for (i of skeletonCards; track i) {
+        <div class="skeleton-card" aria-hidden="true">
+          <div class="skeleton-media"></div>
+          <div class="skeleton-line skeleton-line-short"></div>
+          <div class="skeleton-line"></div>
+        </div>
+      }
+    </div>
   } @else if (failed()) {
     <p class="muted" role="alert">
       No pudimos cargar los destacados. Revisá tu conexión y volvé a intentar.
