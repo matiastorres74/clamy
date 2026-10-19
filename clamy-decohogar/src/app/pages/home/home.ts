@@ -52,6 +52,7 @@ export class Home implements OnInit {
   protected featured = signal<Product[]>([]);
   protected loading = signal(true);
   protected failed = signal(false);
+  protected skeletonCards = Array.from({ length: FEATURED_COUNT }, (_, i) => i);
 
   // Null on the server and until the page has loaded, so the SSR markup holds
   // no <video> and the browser never starts fetching it during first paint.

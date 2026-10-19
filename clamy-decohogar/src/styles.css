@@ -240,6 +240,16 @@ label {
   color: var(--text-faint);
 }
 
+/* Read by screen readers, invisible on screen. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 .product-grid {
   display: grid;
   /* Two columns from the narrowest screen up, so the catalogue reads as a
