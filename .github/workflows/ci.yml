@@ -1,0 +1,104 @@
+name: CI
+
+# Both Vercel projects deploy straight from main, and the API's vercel-build
+# runs `prisma migrate deploy` against production on every deploy, so this is
+# the only gate between a change and the live site.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+# A newer push to the same branch or PR makes the older run pointless.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: Frontend (build, test, audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: clamy-decohogar
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: clamy-decohogar/package-lock.json
+
+      - run: npm ci
+
+      # The production build is also the type check and enforces the bundle
+      # and component-style budgets in angular.json.
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test -- --watch=false
+
+      # Production dependencies only: dev tooling never ships to visitors.
+      # Fails on any high/critical advisory not in .github/audit-allowlist.json.
+      - name: Audit production dependencies
+        run: node ../.github/scripts/audit-gate.mjs clamy-decohogar
+
+  server:
+    name: API (type check, tests, audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: server
+
+    # tests/setup.ts force-resets whatever TEST_DATABASE_URL points at, so it
+    # must only ever be this throwaway container. The password is not a secret:
+    # the container exists only for this job and is reachable only from it.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: ci-only
+          POSTGRES_DB: clamy_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:ci-only@localhost:5432/clamy_test
+      # Only so `prisma generate` can resolve the schema's env() references;
+      # tests/setup.ts points both at TEST_DATABASE_URL anyway.
+      DATABASE_URL: postgresql://postgres:ci-only@localhost:5432/clamy_test
+      DIRECT_URL: postgresql://postgres:ci-only@localhost:5432/clamy_test
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: server/package-lock.json
+
+      - run: npm ci
+
+      # The client's types come from the schema, so tsc needs them generated.
+      - run: npx prisma generate
+
+      - name: Type check
+        run: npx tsc -p tsconfig.json --noEmit
+
+      - name: Tests (against the Postgres service)
+        run: npm test
+
+      - name: Audit production dependencies
+        run: node ../.github/scripts/audit-gate.mjs server
