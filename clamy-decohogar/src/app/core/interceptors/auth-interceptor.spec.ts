@@ -60,6 +60,21 @@ describe('authInterceptor', () => {
     expect(navigateByUrl).toHaveBeenCalledWith('/admin/login');
   });
 
+  // Regression: during server rendering on a protected preview, an anonymous
+  // product request got a 401 from Vercel, this interceptor redirected the
+  // storefront to /admin/login, and the CDN cached that redirect.
+  it('does not redirect an anonymous visitor when a public request gets a 401', () => {
+    localStorage.clear();
+    let failed = false;
+    http.get('/api/products').subscribe({ error: () => (failed = true) });
+    const req = backend.expectOne('/api/products');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({ error: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+    expect(failed).toBe(true);
+    expect(navigateByUrl).not.toHaveBeenCalled();
+  });
+
   it('leaves a wrong password on the login page to its own handler', () => {
     http.post('/api/auth/login', {}).subscribe({ error: () => undefined });
     backend
