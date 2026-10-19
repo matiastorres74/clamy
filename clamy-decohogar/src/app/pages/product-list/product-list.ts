@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, RESPONSE_INIT, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -20,6 +20,7 @@ export class ProductList implements OnInit {
   // Captured in the injection context so takeUntilDestroyed can be used from
   // ngOnInit, where the router observable below is subscribed.
   private destroyRef = inject(DestroyRef);
+  private responseInit = inject(RESPONSE_INIT, { optional: true });
 
   protected categories = CATEGORIES;
   protected products = signal<Product[]>([]);
@@ -60,6 +61,9 @@ export class ProductList implements OnInit {
         // API was down, which is indistinguishable from an empty catalogue.
         if (products === null) {
           this.failed.set(true);
+          // Server-side only (null in the browser): a 503 keeps the CDN from
+          // caching this error page for every visitor.
+          if (this.responseInit) this.responseInit.status = 503;
         } else {
           this.products.set(products);
         }

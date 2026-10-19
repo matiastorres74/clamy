@@ -68,6 +68,9 @@ export class ProductDetail implements OnInit {
           if (this.responseInit) this.responseInit.status = 404;
         } else {
           this.failed.set(true);
+          // Server-side only: a 503 keeps the CDN from caching the error
+          // page for every visitor after a momentary API failure.
+          if (this.responseInit) this.responseInit.status = 503;
         }
         this.loading.set(false);
       },
