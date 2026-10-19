@@ -1,4 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth';
@@ -26,10 +27,23 @@ export class AdminLogin {
         this.loading.set(false);
         this.router.navigateByUrl('/admin');
       },
-      error: () => {
+      error: (err: unknown) => {
         this.loading.set(false);
-        this.error.set('Usuario o contraseña incorrectos.');
+        this.error.set(loginErrorMessage(err));
       },
     });
   }
+}
+
+// Every failure used to read "wrong password", including the rate limiter's
+// 429. An admin who was locked out kept retrying, which only extended the
+// lockout, and an API outage looked like a forgotten password.
+function loginErrorMessage(err: unknown): string {
+  const status = err instanceof HttpErrorResponse ? err.status : 0;
+  if (status === 401) return 'Usuario o contraseña incorrectos.';
+  if (status === 429) {
+    return 'Demasiados intentos. Esperá unos minutos antes de volver a probar.';
+  }
+  if (status === 0) return 'No pudimos conectar con el servidor. Revisá tu conexión.';
+  return 'El servidor no respondió como esperábamos. Probá de nuevo en un rato.';
 }

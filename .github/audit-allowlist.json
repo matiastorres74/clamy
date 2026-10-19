@@ -1,0 +1,9 @@
+[
+  {
+    "advisory": "GHSA-ggr8-5vv4-36mx",
+    "package": "deepmerge-ts",
+    "project": "server",
+    "reason": "Reached only through prisma -> @prisma/config, which merges Prisma's own CLI configuration; no request data ever reaches it. Every Prisma 6 release is affected, and the fix needs the Prisma major upgrade, which ships as its own change.",
+    "expires": "2026-12-31"
+  }
+]

@@ -72,6 +72,22 @@ describe('POST /api/upload', () => {
     );
   });
 
+  it('names the stored file after its image type, not the uploaded file name', async () => {
+    mockedPut.mockResolvedValue({ url: 'https://blob.example/abc.png' } as never);
+
+    const res = await request(app)
+      .post('/api/upload')
+      .set('Authorization', `Bearer ${adminToken()}`)
+      .attach('image', PNG, { filename: 'photo.html', contentType: 'image/png' });
+
+    expect(res.status).toBe(201);
+    expect(mockedPut).toHaveBeenCalledWith(
+      expect.stringMatching(/^[0-9a-f-]{36}\.png$/),
+      expect.any(Buffer),
+      expect.anything(),
+    );
+  });
+
   // Regression: this used to be an unhandled rejection inside multer's
   // callback, which never answered the request and crashed the process.
   it('answers 500 instead of hanging when blob storage fails', async () => {
