@@ -13,29 +13,37 @@
   border-bottom: 1px solid var(--border);
 }
 
-.hero-media-stack {
+.hero-media {
   position: absolute;
   inset: 0;
   background-color: var(--bg-elevated);
 }
 
-.hero-slide {
+.hero-image,
+.hero-video {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
   object-fit: cover;
   object-position: center;
+}
+
+/* The slow zoom stays on the still only: scaling a playing video makes the
+   GPU re-composite every decoded frame, which low-end phones feel. */
+.hero-image {
+  animation: hero-ken-burns 7s ease-out forwards;
+}
+
+/* Fades in over the still once frames are actually playing, so a slow
+   download never shows a black box. */
+.hero-video {
   opacity: 0;
-  transform: scale(1);
   transition: opacity 1.2s ease;
 }
 
-.hero-slide.active {
+.hero-video.playing {
   opacity: 1;
-  animation: hero-ken-burns 7s ease-out forwards;
 }
 
 @keyframes hero-ken-burns {
@@ -48,7 +56,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .hero-slide.active {
+  .hero-image {
     animation: none;
   }
 }
@@ -90,43 +98,39 @@
   justify-content: center;
 }
 
-.hero-dots {
+.hero-video-toggle {
   position: absolute;
-  left: 50%;
+  left: 2rem;
   bottom: 2.5rem;
-  transform: translateX(-50%);
   z-index: 1;
-  display: flex;
-  gap: 0.6rem;
-}
-
-.hero-dot {
-  width: 24px;
-  height: 24px;
+  width: 2.25rem;
+  height: 2.25rem;
+  /* The video shows from 700px up, which includes tablets, so this follows
+     the same --tap-min touch target as every other control. It has to be a
+     min-* floor: --tap-min is `auto` on mouse devices, and max(2.25rem, auto)
+     is invalid, which dropped the size entirely and left a 16px button. */
+  min-width: var(--tap-min);
+  min-height: var(--tap-min);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: none;
   padding: 0;
-  cursor: pointer;
-}
-
-.hero-dot::after {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
   border: 1px solid var(--border-strong);
-  transition: background 0.2s ease, transform 0.2s ease;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+  transition: color 0.2s ease, border-color 0.2s ease;
 }
 
-.hero-dot:hover::after {
-  transform: scale(1.2);
+.hero-video-toggle:hover {
+  color: var(--text);
+  border-color: var(--text);
 }
 
-.hero-dot.active::after {
-  background: var(--text);
+.hero-video-toggle:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
 }
 
 .hero-scroll {
