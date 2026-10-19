@@ -1,4 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap');
+/* Fonts are linked from index.html rather than @import-ed here: an @import
+   is only discovered after this file downloads, and the production build
+   can inline a <link> in index.html but not an @import. */
 
 :root {
   --bg: #050506;
