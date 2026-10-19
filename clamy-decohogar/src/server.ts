@@ -27,6 +27,7 @@ app.use(helmet({ contentSecurityPolicy: false }));
  * untouched and vercel.json needs no routing config at all.
  */
 const API_ORIGIN = process.env['API_ORIGIN'] || 'http://localhost:3001';
+const API_TIMEOUT_MS = 10_000;
 
 app.use('/api', async (req, res, next) => {
   try {
@@ -41,10 +42,13 @@ app.use('/api', async (req, res, next) => {
       }
     }
 
+    // Without a timeout a hung API held this function open until Vercel's
+    // 300s limit, with the visitor waiting the whole time.
     const upstream = await fetch(`${API_ORIGIN}${req.originalUrl}`, {
       method: req.method,
       headers,
       body: req.method === 'GET' || req.method === 'HEAD' ? undefined : body,
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
     });
 
     res.status(upstream.status);
@@ -55,6 +59,10 @@ app.use('/api', async (req, res, next) => {
     });
     res.send(Buffer.from(await upstream.arrayBuffer()));
   } catch (err) {
+    if (err instanceof Error && err.name === 'TimeoutError') {
+      res.status(504).json({ error: 'The API did not respond in time' });
+      return;
+    }
     next(err);
   }
 });
@@ -91,8 +99,11 @@ const PAGE_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=86400';
 // browsers to hold a private copy of the page.
 const CDN_CACHE_CONTROL = 'max-age=600, stale-while-revalidate=86400';
 
-function isCacheablePage(method: string, path: string): boolean {
-  return method === 'GET' && !path.startsWith('/admin');
+// Only a real page (200) or a real "not found" (404) is shared through the
+// CDN. A redirect or a 503 rendered while the API was failing used to be
+// cached as well, and then served to every visitor for ten minutes.
+function isCacheablePage(method: string, path: string, status: number): boolean {
+  return method === 'GET' && !path.startsWith('/admin') && (status === 200 || status === 404);
 }
 
 /**
@@ -103,7 +114,7 @@ app.use((req, res, next) => {
     .handle(req)
     .then((response) => {
       if (!response) return next();
-      if (isCacheablePage(req.method, req.path)) {
+      if (isCacheablePage(req.method, req.path, response.status)) {
         response.headers.set('Cache-Control', PAGE_CACHE_CONTROL);
         response.headers.set('Vercel-CDN-Cache-Control', CDN_CACHE_CONTROL);
       }

@@ -3,6 +3,7 @@ import {
   DestroyRef,
   ElementRef,
   OnInit,
+  RESPONSE_INIT,
   afterNextRender,
   inject,
   signal,
@@ -44,6 +45,7 @@ interface NetworkInformationLike {
 export class Home implements OnInit {
   private productService = inject(ProductService);
   private destroyRef = inject(DestroyRef);
+  private responseInit = inject(RESPONSE_INIT, { optional: true });
 
   private heroVideo = viewChild<ElementRef<HTMLVideoElement>>('heroVideo');
 
@@ -119,6 +121,10 @@ export class Home implements OnInit {
         error: () => {
           this.failed.set(true);
           this.loading.set(false);
+          // Server-side only (null in the browser). Answered as 200, the CDN
+          // cached this error page and served it to every visitor for ten
+          // minutes after a momentary API failure; a 503 is never cached.
+          if (this.responseInit) this.responseInit.status = 503;
         },
       });
   }
