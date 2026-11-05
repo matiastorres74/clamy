@@ -7,6 +7,8 @@ import {
 import express from 'express';
 import helmet from 'helmet';
 import { join } from 'node:path';
+import { Product } from './app/core/models/product.model';
+import { ROBOTS_TXT, buildSitemapXml } from './seo-files';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -64,6 +66,36 @@ app.use('/api', async (req, res, next) => {
       return;
     }
     next(err);
+  }
+});
+
+// Served from here rather than public/ because express.static below caches
+// for a year, and because the sitemap has to follow the catalogue. An hour on
+// the CDN keeps a crawl from hitting the API on every request.
+const SEO_BROWSER_CACHE = 'public, s-maxage=3600';
+const SEO_CDN_CACHE = 'max-age=3600';
+
+app.get('/robots.txt', (_req, res) => {
+  res.setHeader('Cache-Control', SEO_BROWSER_CACHE);
+  res.setHeader('Vercel-CDN-Cache-Control', SEO_CDN_CACHE);
+  res.type('text/plain').send(ROBOTS_TXT);
+});
+
+app.get('/sitemap.xml', async (_req, res) => {
+  try {
+    const upstream = await fetch(`${API_ORIGIN}/api/products`, {
+      signal: AbortSignal.timeout(API_TIMEOUT_MS),
+    });
+    if (!upstream.ok) throw new Error(`API answered ${upstream.status}`);
+    const products = (await upstream.json()) as Pick<Product, 'id' | 'updatedAt'>[];
+    res.setHeader('Cache-Control', SEO_BROWSER_CACHE);
+    res.setHeader('Vercel-CDN-Cache-Control', SEO_CDN_CACHE);
+    res.type('application/xml').send(buildSitemapXml(products));
+  } catch (err) {
+    // A 503 tells Google to retry later. A sitemap missing the products would
+    // read as if they had all been removed.
+    console.error('Could not build the sitemap:', err);
+    res.status(503).setHeader('Retry-After', '3600').type('text/plain').send('Sitemap unavailable');
   }
 });
 
