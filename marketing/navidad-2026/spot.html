@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<title>Clamy · Spot Navidad 2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  @font-face { font-family: 'Montserrat'; font-weight: 500; src: url('fonts/montserrat-latin-500-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Montserrat'; font-weight: 600; src: url('fonts/montserrat-latin-600-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Montserrat'; font-weight: 700; src: url('fonts/montserrat-latin-700-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Montserrat'; font-weight: 800; src: url('fonts/montserrat-latin-800-normal.woff2') format('woff2'); }
+  @font-face { font-family: 'Outfit'; font-weight: 600; src: url('fonts/outfit-latin-600-normal.woff2') format('woff2'); }
+
+  :root { --cream: #f6ead3; --amber: #ffb648; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #050506; overflow: hidden; }
+  body { font-family: 'Montserrat', sans-serif; color: var(--cream); }
+
+  /* El cuadro mide siempre 1080x1920; para verlo en pantalla se escala entero. */
+  #stage { position: absolute; left: 0; top: 0; width: 1080px; height: 1920px; overflow: hidden; transform-origin: 0 0; background: #040714; }
+  #stage > * { position: absolute; }
+  #scene, #fx { left: 0; top: 0; width: 1080px; height: 1920px; }
+  #scrimT { left: 0; top: 0; width: 100%; height: 620px; background: linear-gradient(#020308e6, #02030800); }
+  #scrimB { left: 0; bottom: 0; width: 100%; height: 900px; background: linear-gradient(#02030800, #020308d9 45%, #020308f2); }
+  #flash { inset: 0; background: #fff3d6; opacity: 0; }
+
+  #title { left: 60px; right: 60px; top: 290px; }
+  .eyebrow { font-weight: 600; font-size: 26px; letter-spacing: .34em; text-transform: uppercase; color: var(--amber); }
+  #title h1 { margin: 22px 0 0; font-weight: 800; font-size: 96px; line-height: 1.04; letter-spacing: -.01em; color: var(--cream); }
+
+  #rooms { left: 60px; top: 262px; }
+  #rooms span { position: absolute; left: 0; top: 0; white-space: nowrap; font-weight: 600; font-size: 28px; letter-spacing: .34em; text-transform: uppercase; opacity: 0; }
+  #rooms span::before { content: ''; display: inline-block; width: 46px; height: 2px; background: var(--amber); vertical-align: middle; margin-right: 18px; }
+  #brand { right: 60px; top: 246px; font-family: 'Outfit', sans-serif; font-weight: 600; font-size: 46px; letter-spacing: -.01em; opacity: 0; }
+
+  #cards { left: 0; top: 0; }
+  .card { position: absolute; left: 50px; top: 1316px; width: 880px; height: 220px; padding: 15px; display: flex; align-items: center; gap: 26px;
+          background: #08080ae6; border: 1px solid #ffffff38; border-radius: 6px; opacity: 0; }
+  .card img { width: 190px; height: 190px; object-fit: cover; border-radius: 3px; flex: none; }
+  .card .cat { font-weight: 600; font-size: 21px; letter-spacing: .3em; text-transform: uppercase; color: var(--amber); }
+  .card h3 { margin: 10px 0 0; font-weight: 700; font-size: 40px; line-height: 1.12; color: var(--cream); }
+  .card p { margin: 9px 0 0; font-weight: 500; font-size: 24px; line-height: 1.28; color: #c9c2b4; }
+
+  #end { left: 0; width: 100%; top: 372px; text-align: center; text-shadow: 0 2px 14px #040714; }
+  #logo { width: 400px; height: auto; display: block; margin: 0 auto; opacity: 0; }
+  #end p { margin: 0; opacity: 0; }
+  #end .l1 { margin-top: 26px; font-weight: 700; font-size: 46px; }
+  #end .l2 { margin-top: 16px; font-weight: 500; font-size: 30px; }
+  #end .l3 { margin-top: 10px; font-weight: 700; font-size: 30px; color: var(--amber); }
+  #end .l4 { margin-top: 12px; font-weight: 500; font-size: 24px; letter-spacing: .04em; color: #d6cdb9; }
+
+  #ui { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 16px; display: flex; gap: 12px; align-items: center;
+        background: #000000b3; font: 500 13px 'Montserrat', sans-serif; color: #ddd; z-index: 5; }
+  #ui input { flex: 1; }
+  #ui button { font: inherit; color: inherit; background: none; border: 1px solid #777; border-radius: 3px; padding: 4px 10px; cursor: pointer; }
+  body.render #ui { display: none; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <svg id="scene" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="scrimT"></div>
+  <div id="scrimB"></div>
+  <svg id="fx" viewBox="0 0 1080 1920" xmlns="http://www.w3.org/2000/svg"></svg>
+  <div id="title">
+    <div class="eyebrow">Navidad en Clamy</div>
+    <h1>Esta Navidad,<br>prendé la casa.</h1>
+  </div>
+  <div id="rooms"></div>
+  <div id="brand">Clamy</div>
+  <div id="cards"></div>
+  <div id="end">
+    <svg id="logo" viewBox="110 100 680 760" xmlns="http://www.w3.org/2000/svg"></svg>
+    <p class="l1">Felices fiestas</p>
+    <p class="l2">Santa Fe 1527 · Rosario</p>
+    <p class="l3">WhatsApp 341 540-0815</p>
+    <p class="l4">Envíos a todo el país · Mayorista y minorista</p>
+  </div>
+  <div id="flash"></div>
+</div>
+<div id="ui">
+  <button id="play" type="button">Pausa</button>
+  <input id="scrub" type="range" min="0" max="36" step="0.01" value="0" aria-label="Posición">
+  <span id="clock">0.0 s</span>
+</div>
+<script src="world.js"></script>
+<script src="spot.js"></script>
+</body>
+</html>
