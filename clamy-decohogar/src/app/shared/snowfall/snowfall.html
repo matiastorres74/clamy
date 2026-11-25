@@ -1,0 +1,12 @@
+@for (flake of flakes; track $index) {
+  <span
+    class="flake"
+    [style.left.%]="flake.left"
+    [style.width.px]="flake.size"
+    [style.height.px]="flake.size"
+    [style.opacity]="flake.opacity"
+    [style.animation-duration.s]="flake.duration"
+    [style.animation-delay.s]="flake.delay"
+    [style.--drift.px]="flake.drift"
+  ></span>
+}

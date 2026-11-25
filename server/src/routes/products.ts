@@ -122,9 +122,6 @@ function validateProductBody(body: any) {
   if (typeof price !== 'number' || Number.isNaN(price) || price < 0) {
     return 'price must be a non-negative number';
   }
-  if (!isValidCategory(category)) {
-    return 'category must be one of the valid category ids';
-  }
   if (images !== undefined && !isImageList(images)) {
     return `images must be a list of up to ${MAX_IMAGES} http(s) URLs`;
   }
@@ -134,8 +131,18 @@ function validateProductBody(body: any) {
   return null;
 }
 
+// Separate from validateProductBody because it needs a database lookup.
+async function validateProduct(body: any): Promise<string | null> {
+  const error = validateProductBody(body);
+  if (error) return error;
+  if (!(await isValidCategory(body.category))) {
+    return 'category must be one of the valid category ids';
+  }
+  return null;
+}
+
 productsRouter.post('/', requireAdmin, async (req, res) => {
-  const error = validateProductBody(req.body);
+  const error = await validateProduct(req.body);
   if (error) {
     return res.status(400).json({ error });
   }
@@ -160,7 +167,7 @@ productsRouter.put('/:id', requireAdmin, async (req, res) => {
     return res.status(400).json({ error: 'Invalid product id' });
   }
 
-  const error = validateProductBody(req.body);
+  const error = await validateProduct(req.body);
   if (error) {
     return res.status(400).json({ error });
   }

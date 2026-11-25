@@ -34,6 +34,44 @@
   flex: 1;
 }
 
+/* Christmas season only (see core/season.ts). */
+.season-link {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-min);
+  font-size: var(--text-label);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text);
+  white-space: nowrap;
+  transition: text-shadow 0.2s ease;
+}
+
+.season-link:hover {
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.6);
+}
+
+.season-star {
+  display: inline-block;
+  font-size: 0.8em;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  animation: season-twinkle 2.8s ease-in-out infinite;
+}
+
+@keyframes season-twinkle {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .season-star {
+    animation: none;
+  }
+}
+
 .topbar-search input {
   padding: 0.4rem 0.85rem;
   font-size: 0.85rem;
@@ -271,6 +309,13 @@
   }
 
   .mobile-nav {
+    display: none;
+  }
+}
+
+/* On phones the open search field needs the whole row. */
+@media (width <= 37.5em) {
+  .topbar-search ~ .season-link {
     display: none;
   }
 }

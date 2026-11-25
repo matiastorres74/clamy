@@ -13,7 +13,10 @@ import { RouterLink } from '@angular/router';
 import { of, switchMap } from 'rxjs';
 import { ProductService } from '../../core/services/product';
 import { ProductCard } from '../../shared/product-card/product-card';
-import { CATEGORIES, Product } from '../../core/models/product.model';
+import { Product } from '../../core/models/product.model';
+import { CategoryService } from '../../core/services/category';
+import { isChristmasSeason } from '../../core/season';
+import { Snowfall } from '../../shared/snowfall/snowfall';
 import { environment } from '../../../environments/environment';
 
 // How many products the "Destacados" section shows; two rows of the
@@ -38,7 +41,7 @@ interface NetworkInformationLike {
 
 @Component({
   selector: 'app-home',
-  imports: [RouterLink, ProductCard],
+  imports: [RouterLink, ProductCard, Snowfall],
   templateUrl: './home.html',
   styleUrl: './home.css',
 })
@@ -49,7 +52,8 @@ export class Home implements OnInit {
 
   private heroVideo = viewChild<ElementRef<HTMLVideoElement>>('heroVideo');
 
-  protected categories = CATEGORIES;
+  protected categories = inject(CategoryService).categories;
+  protected christmasSeason = isChristmasSeason();
   protected whatsappUrl = `https://wa.me/${environment.whatsappNumber}`;
   protected featured = signal<Product[]>([]);
   protected loading = signal(true);

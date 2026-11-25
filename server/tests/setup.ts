@@ -34,6 +34,16 @@ execSync(
   },
 );
 
+// Same for the default categories: product tests create rows in them.
+execSync(
+  'npx prisma db execute --schema prisma/schema.prisma --file prisma/migrations/20261125120100_seed_categories/migration.sql',
+  {
+    cwd: path.join(__dirname, '..'),
+    env: process.env,
+    stdio: 'inherit',
+  },
+);
+
 afterAll(async () => {
   const { prisma } = await import('../src/lib/prisma');
   await prisma.$disconnect();

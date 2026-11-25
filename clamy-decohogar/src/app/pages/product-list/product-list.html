@@ -20,7 +20,7 @@
     >
       Todas
     </button>
-    @for (cat of categories; track cat.id) {
+    @for (cat of categories(); track cat.id) {
       <button
         class="chip"
         type="button"

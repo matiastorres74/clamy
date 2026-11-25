@@ -5,13 +5,15 @@ import {
   Injector,
   ViewChild,
   afterNextRender,
+  computed,
   inject,
   signal,
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth';
-import { CATEGORIES } from '../../core/models/product.model';
+import { CategoryService } from '../../core/services/category';
+import { CHRISTMAS_CATEGORY_ID, isChristmasSeason } from '../../core/season';
 
 @Component({
   selector: 'app-navbar',
@@ -31,7 +33,12 @@ export class Navbar {
   @ViewChild('menuToggle') private menuToggle?: ElementRef<HTMLButtonElement>;
   @ViewChild('mobileNav') private mobileNav?: ElementRef<HTMLElement>;
 
-  protected categories = CATEGORIES;
+  protected categories = inject(CategoryService).categories;
+  protected christmasId = CHRISTMAS_CATEGORY_ID;
+  // Only in season, and only while the admin keeps the Navidad category.
+  protected christmasCategory = computed(() =>
+    isChristmasSeason() ? this.categories().find((c) => c.id === CHRISTMAS_CATEGORY_ID) : undefined,
+  );
 
   protected menuOpen = signal(false);
   protected searchOpen = signal(false);

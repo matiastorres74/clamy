@@ -7,7 +7,7 @@ import {
 import express from 'express';
 import helmet from 'helmet';
 import { join } from 'node:path';
-import { Product } from './app/core/models/product.model';
+import { Category, Product } from './app/core/models/product.model';
 import { ROBOTS_TXT, buildSitemapXml } from './seo-files';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -83,14 +83,20 @@ app.get('/robots.txt', (_req, res) => {
 
 app.get('/sitemap.xml', async (_req, res) => {
   try {
-    const upstream = await fetch(`${API_ORIGIN}/api/products`, {
-      signal: AbortSignal.timeout(API_TIMEOUT_MS),
-    });
-    if (!upstream.ok) throw new Error(`API answered ${upstream.status}`);
-    const products = (await upstream.json()) as Pick<Product, 'id' | 'updatedAt'>[];
+    const fetchJson = async <T>(path: string): Promise<T> => {
+      const upstream = await fetch(`${API_ORIGIN}${path}`, {
+        signal: AbortSignal.timeout(API_TIMEOUT_MS),
+      });
+      if (!upstream.ok) throw new Error(`API answered ${upstream.status} for ${path}`);
+      return (await upstream.json()) as T;
+    };
+    const [products, categories] = await Promise.all([
+      fetchJson<Pick<Product, 'id' | 'updatedAt'>[]>('/api/products'),
+      fetchJson<Pick<Category, 'id'>[]>('/api/categories'),
+    ]);
     res.setHeader('Cache-Control', SEO_BROWSER_CACHE);
     res.setHeader('Vercel-CDN-Cache-Control', SEO_CDN_CACHE);
-    res.type('application/xml').send(buildSitemapXml(products));
+    res.type('application/xml').send(buildSitemapXml(products, categories));
   } catch (err) {
     // A 503 tells Google to retry later. A sitemap missing the products would
     // read as if they had all been removed.

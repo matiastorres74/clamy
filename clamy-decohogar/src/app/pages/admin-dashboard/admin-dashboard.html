@@ -6,6 +6,7 @@
     </div>
     <div class="admin-header-actions">
       <button class="btn btn-solid" (click)="openCreateForm()">Nuevo producto</button>
+      <button class="btn" type="button" (click)="scrollToCategories()">Editar categorías</button>
       <button class="btn" (click)="logout()">Cerrar sesión</button>
     </div>
   </header>
@@ -29,7 +30,7 @@
           <div class="field">
             <label for="category">Categoría</label>
             <select id="category" name="category" [(ngModel)]="form.category">
-              @for (cat of categories; track cat.id) {
+              @for (cat of categories(); track cat.id) {
                 <option [value]="cat.id">{{ cat.label }}</option>
               }
             </select>
@@ -197,4 +198,8 @@
       </table>
     </div>
   }
+
+  <div id="admin-categorias" class="admin-categories">
+    <app-category-manager [productCounts]="productCounts()" />
+  </div>
 </section>
