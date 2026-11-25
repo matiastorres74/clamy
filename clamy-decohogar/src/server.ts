@@ -9,15 +9,16 @@ import helmet from 'helmet';
 import { join } from 'node:path';
 import { Category, Product } from './app/core/models/product.model';
 import { ROBOTS_TXT, buildSitemapXml } from './seo-files';
+import { applyScriptNonce, buildCsp, robotsTagFor } from './security-headers';
+import { randomBytes } from 'node:crypto';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
-// CSP is left to the app's own build/asset setup rather than helmet's
-// generic default, which is tuned for typical hand-written HTML and can
-// block Angular's hydration/inline styles without page-specific tuning.
+// helmet's generic CSP would block Angular's inline scripts; rendered pages
+// get their own nonce-based policy below (see security-headers.ts).
 app.use(helmet({ contentSecurityPolicy: false }));
 
 /**
@@ -144,12 +145,34 @@ function isCacheablePage(method: string, path: string, status: number): boolean 
   return method === 'GET' && !path.startsWith('/admin') && (status === 200 || status === 404);
 }
 
+// A fresh nonce per render. A page cached on the CDN keeps the header and the
+// HTML it was rendered with, so the two always match.
+async function withSecurityHeaders(response: Response, path: string): Promise<Response> {
+  const headers = new Headers(response.headers);
+  const robots = robotsTagFor(path);
+  if (robots) headers.set('X-Robots-Tag', robots);
+
+  if (!headers.get('content-type')?.includes('text/html')) {
+    return new Response(response.body, { status: response.status, headers });
+  }
+
+  const nonce = randomBytes(16).toString('base64');
+  const html = applyScriptNonce(await response.text(), nonce);
+  headers.set('Content-Security-Policy', buildCsp(nonce));
+  headers.delete('content-length');
+  return new Response(html, { status: response.status, statusText: response.statusText, headers });
+}
+
 /**
  * Handle all other requests by rendering the Angular application.
  */
 app.use((req, res, next) => {
   angularApp
     .handle(req)
+    .then((response) => {
+      if (!response) return null;
+      return withSecurityHeaders(response, req.path);
+    })
     .then((response) => {
       if (!response) return next();
       if (isCacheablePage(req.method, req.path, response.status)) {
