@@ -5,7 +5,8 @@ import { FormsModule } from '@angular/forms';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { ProductService } from '../../core/services/product';
 import { ProductCard } from '../../shared/product-card/product-card';
-import { CATEGORIES, Product } from '../../core/models/product.model';
+import { Product } from '../../core/models/product.model';
+import { CategoryService } from '../../core/services/category';
 
 @Component({
   selector: 'app-product-list',
@@ -22,7 +23,7 @@ export class ProductList implements OnInit {
   private destroyRef = inject(DestroyRef);
   private responseInit = inject(RESPONSE_INIT, { optional: true });
 
-  protected categories = CATEGORIES;
+  protected categories = inject(CategoryService).categories;
   protected products = signal<Product[]>([]);
   protected loading = signal(true);
   protected activeCategory = signal<string | null>(null);

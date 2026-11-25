@@ -366,3 +366,8 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+.admin-categories {
+  margin-top: 3rem;
+  scroll-margin-top: 1.5rem;
+}

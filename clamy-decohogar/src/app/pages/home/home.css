@@ -263,8 +263,10 @@
   }
 }
 
+/* The admin decides how many categories there are, so wide screens fit as
+   many columns as the count allows instead of a fixed five. */
 @media (width > 62.5em) {
   .category-grid {
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
   }
 }

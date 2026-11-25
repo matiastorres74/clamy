@@ -1,21 +1,12 @@
+// Categories live in the database and the admin edits them; see
+// CategoryService. The id is a slug fixed at creation, the label can change.
 export interface Category {
-  id: CategoryId;
+  id: string;
   label: string;
+  position: number;
 }
 
-export type CategoryId = 'furniture' | 'lighting' | 'decoration' | 'kitchen' | 'everyday-use';
-
-export const CATEGORIES: Category[] = [
-  { id: 'furniture', label: 'Muebles' },
-  { id: 'lighting', label: 'Iluminación' },
-  { id: 'decoration', label: 'Decoración' },
-  { id: 'kitchen', label: 'Cocina' },
-  { id: 'everyday-use', label: 'Varios' },
-];
-
-export function categoryLabel(id: string): string {
-  return CATEGORIES.find((c) => c.id === id)?.label ?? id;
-}
+export type CategoryId = string;
 
 export interface Product {
   id: number;

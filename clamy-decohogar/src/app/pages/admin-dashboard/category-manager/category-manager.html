@@ -1,0 +1,83 @@
+<section class="category-manager card" aria-labelledby="categories-title">
+  <h2 class="form-title" id="categories-title">Categorías</h2>
+  <p class="muted category-hint">
+    El orden de esta lista es el del menú y la portada. Para eliminar una categoría primero
+    pasá sus productos a otra.
+  </p>
+
+  <ul class="category-list">
+    @for (cat of categories(); track cat.id; let i = $index, first = $first, last = $last) {
+      <li class="category-row">
+        <form class="category-rename" (ngSubmit)="rename(cat)">
+          <label class="visually-hidden" [for]="'cat-' + cat.id">Nombre de {{ cat.label }}</label>
+          <input
+            [id]="'cat-' + cat.id"
+            [name]="'cat-' + cat.id"
+            type="text"
+            maxlength="60"
+            [ngModel]="draft(cat)"
+            (ngModelChange)="setDraft(cat, $event)"
+          />
+          @if (isDirty(cat)) {
+            <button class="btn uploader-mini" type="submit" [disabled]="busy()">Guardar</button>
+          }
+        </form>
+        <span class="muted category-count">
+          {{ count(cat) }} {{ count(cat) === 1 ? 'producto' : 'productos' }}
+        </span>
+        <div class="category-actions">
+          <button
+            class="link-btn"
+            type="button"
+            [disabled]="busy() || first"
+            (click)="move(i, -1)"
+            [attr.aria-label]="'Subir ' + cat.label"
+          >
+            ↑
+          </button>
+          <button
+            class="link-btn"
+            type="button"
+            [disabled]="busy() || last"
+            (click)="move(i, 1)"
+            [attr.aria-label]="'Bajar ' + cat.label"
+          >
+            ↓
+          </button>
+          <button
+            class="link-btn danger"
+            type="button"
+            [disabled]="busy()"
+            (click)="remove(cat)"
+          >
+            Eliminar
+          </button>
+        </div>
+      </li>
+    } @empty {
+      <li class="muted">Todavía no hay categorías.</li>
+    }
+  </ul>
+
+  <form class="category-add" (ngSubmit)="add()">
+    <label for="new-category">Nueva categoría</label>
+    <div class="category-add-row">
+      <input
+        id="new-category"
+        name="new-category"
+        type="text"
+        maxlength="60"
+        placeholder="Ej.: Jardín"
+        [ngModel]="newLabel()"
+        (ngModelChange)="newLabel.set($event)"
+      />
+      <button class="btn btn-solid" type="submit" [disabled]="busy() || !newLabel().trim()">
+        Agregar
+      </button>
+    </div>
+  </form>
+
+  @if (error()) {
+    <p class="error-text" role="alert">{{ error() }}</p>
+  }
+</section>

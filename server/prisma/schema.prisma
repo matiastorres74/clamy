@@ -21,6 +21,16 @@ model Product {
   updatedAt   DateTime @updatedAt
 }
 
+// Editable from the admin panel. Product.category stores the id, which is a
+// slug fixed at creation so renaming a category never breaks product rows or
+// links already shared with ?category=<id>.
+model Category {
+  id        String   @id
+  label     String
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+}
+
 model AdminUser {
   id           Int      @id @default(autoincrement())
   username     String   @unique

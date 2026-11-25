@@ -1,16 +1,12 @@
-import { Component, OnDestroy, OnInit, inject, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { ProductService } from '../../core/services/product';
 import { AuthService } from '../../core/services/auth';
-import {
-  CATEGORIES,
-  CategoryId,
-  Product,
-  ProductInput,
-  categoryLabel,
-} from '../../core/models/product.model';
+import { CategoryId, Product, ProductInput } from '../../core/models/product.model';
+import { CategoryService } from '../../core/services/category';
+import { CategoryManager } from './category-manager/category-manager';
 import { ArsCurrencyPipe } from '../../shared/pipes/ars-currency.pipe';
 
 interface ProductFormState {
@@ -48,13 +44,13 @@ function rejectReason(file: File): string | null {
   return null;
 }
 
-function emptyForm(): ProductFormState {
+function emptyForm(defaultCategory: CategoryId): ProductFormState {
   return {
     id: null,
     name: '',
     description: '',
     price: null,
-    category: 'lighting',
+    category: defaultCategory,
     featured: false,
     images: [],
   };
@@ -62,7 +58,7 @@ function emptyForm(): ProductFormState {
 
 @Component({
   selector: 'app-admin-dashboard',
-  imports: [FormsModule, ArsCurrencyPipe],
+  imports: [FormsModule, ArsCurrencyPipe, CategoryManager],
   templateUrl: './admin-dashboard.html',
   styleUrl: './admin-dashboard.css',
 })
@@ -71,8 +67,9 @@ export class AdminDashboard implements OnInit, OnDestroy {
   private auth = inject(AuthService);
   private router = inject(Router);
 
-  protected categories = CATEGORIES;
-  protected categoryLabel = categoryLabel;
+  private categoryService = inject(CategoryService);
+  protected categories = this.categoryService.categories;
+  protected categoryLabel = (id: string) => this.categoryService.label(id);
   protected maxImages = MAX_IMAGES;
   protected products = signal<Product[]>([]);
   protected loading = signal(true);
@@ -80,7 +77,12 @@ export class AdminDashboard implements OnInit, OnDestroy {
   /** Errors from actions on the table itself, shown outside the form panel. */
   protected listError = signal<string | null>(null);
   protected showForm = signal(false);
-  protected form: ProductFormState = emptyForm();
+  protected form: ProductFormState = emptyForm('');
+  protected productCounts = computed(() => {
+    const counts: Record<string, number> = {};
+    for (const p of this.products()) counts[p.category] = (counts[p.category] ?? 0) + 1;
+    return counts;
+  });
   protected pending = signal<PendingImage[]>([]);
   protected dragOver = signal(false);
   protected saving = signal(false);
@@ -126,7 +128,7 @@ export class AdminDashboard implements OnInit, OnDestroy {
   }
 
   openCreateForm(): void {
-    this.form = emptyForm();
+    this.form = emptyForm(this.categories()[0]?.id ?? '');
     this.clearPending();
     this.error.set(null);
     this.revealForm();
@@ -301,6 +303,10 @@ export class AdminDashboard implements OnInit, OnDestroy {
       // and the admin couldn't tell whether to try again.
       error: () => this.listError.set(`No se pudo eliminar "${product.name}". Probá de nuevo.`),
     });
+  }
+
+  scrollToCategories(): void {
+    document.getElementById('admin-categorias')?.scrollIntoView({ block: 'start' });
   }
 
   logout(): void {

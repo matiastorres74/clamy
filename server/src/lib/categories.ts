@@ -1,15 +1,18 @@
-export const CATEGORIES = [
-  { id: 'furniture', label: 'Muebles' },
-  { id: 'lighting', label: 'Iluminación' },
-  { id: 'decoration', label: 'Decoración' },
-  { id: 'kitchen', label: 'Cocina' },
-  { id: 'everyday-use', label: 'Varios' },
-] as const;
+import { prisma } from './prisma';
 
-export type CategoryId = (typeof CATEGORIES)[number]['id'];
+export async function isValidCategory(value: unknown): Promise<boolean> {
+  if (typeof value !== 'string' || value.length === 0) return false;
+  const found = await prisma.category.findUnique({ where: { id: value }, select: { id: true } });
+  return found !== null;
+}
 
-export const CATEGORY_IDS: CategoryId[] = CATEGORIES.map((c) => c.id);
-
-export function isValidCategory(value: unknown): value is CategoryId {
-  return typeof value === 'string' && (CATEGORY_IDS as string[]).includes(value);
+// Turns a label into a URL-safe id: "Decoración de mesa" -> "decoracion-de-mesa".
+export function slugify(label: string): string {
+  return label
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
 }

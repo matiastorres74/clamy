@@ -1,8 +1,8 @@
-import { CATEGORIES } from './app/core/models/product.model';
+const CATEGORIES = [{ id: 'christmas' }, { id: 'lighting' }];
 import { ROBOTS_TXT, SITE_URL, buildSitemapXml } from './seo-files';
 
 describe('buildSitemapXml', () => {
-  const xml = buildSitemapXml([{ id: 52, updatedAt: '2026-10-01T12:00:00.000Z' }]);
+  const xml = buildSitemapXml([{ id: 52, updatedAt: '2026-10-01T12:00:00.000Z' }], CATEGORIES);
 
   it('lists the home page, the catalogue and every category', () => {
     expect(xml).toContain(`<loc>${SITE_URL}/</loc>`);

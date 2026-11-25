@@ -1,4 +1,4 @@
-import { CATEGORIES, Product } from './app/core/models/product.model';
+import { Category, Product } from './app/core/models/product.model';
 
 export const SITE_URL = 'https://clamy-web.vercel.app';
 
@@ -24,11 +24,14 @@ function urlEntry(path: string, lastmod?: string): string {
 }
 
 /** Public pages only: the admin routes have nothing to offer a search engine. */
-export function buildSitemapXml(products: Pick<Product, 'id' | 'updatedAt'>[]): string {
+export function buildSitemapXml(
+  products: Pick<Product, 'id' | 'updatedAt'>[],
+  categories: Pick<Category, 'id'>[],
+): string {
   const entries = [
     urlEntry('/'),
     urlEntry('/productos'),
-    ...CATEGORIES.map((category) => urlEntry(`/productos?category=${category.id}`)),
+    ...categories.map((category) => urlEntry(`/productos?category=${encodeURIComponent(category.id)}`)),
     ...products.map((product) => urlEntry(`/productos/${product.id}`, product.updatedAt)),
   ];
   return [

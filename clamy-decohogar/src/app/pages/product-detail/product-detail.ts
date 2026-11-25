@@ -11,7 +11,8 @@ import {
 import { HttpErrorResponse } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ProductService } from '../../core/services/product';
-import { categoryLabel, Product } from '../../core/models/product.model';
+import { Product } from '../../core/models/product.model';
+import { CategoryService } from '../../core/services/category';
 import { environment } from '../../../environments/environment';
 
 @Component({
@@ -24,7 +25,8 @@ export class ProductDetail implements OnInit {
   private route = inject(ActivatedRoute);
   private productService = inject(ProductService);
   private responseInit = inject(RESPONSE_INIT, { optional: true });
-  protected categoryLabel = categoryLabel;
+  private categoryService = inject(CategoryService);
+  protected categoryLabel = (id: string) => this.categoryService.label(id);
 
   @ViewChild('track') private track?: ElementRef<HTMLElement>;
 

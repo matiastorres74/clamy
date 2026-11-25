@@ -1,6 +1,7 @@
-import { Component, input } from '@angular/core';
+import { Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Product, categoryLabel } from '../../core/models/product.model';
+import { Product } from '../../core/models/product.model';
+import { CategoryService } from '../../core/services/category';
 
 @Component({
   selector: 'app-product-card',
@@ -10,5 +11,6 @@ import { Product, categoryLabel } from '../../core/models/product.model';
 })
 export class ProductCard {
   product = input.required<Product>();
-  protected categoryLabel = categoryLabel;
+  private categoryService = inject(CategoryService);
+  protected categoryLabel = (id: string) => this.categoryService.label(id);
 }
