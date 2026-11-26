@@ -256,6 +256,11 @@
   object-fit: cover;
 }
 
+.id-cell {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
 .thumb-placeholder {
   display: flex;
   align-items: center;

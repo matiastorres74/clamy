@@ -166,6 +166,7 @@
         <thead>
           <tr>
             <th></th>
+            <th>ID</th>
             <th>Nombre</th>
             <th>Categoría</th>
             <th>Precio</th>
@@ -183,6 +184,7 @@
                   <div class="thumb-placeholder" aria-label="Sin foto">—</div>
                 }
               </td>
+              <td class="id-cell" data-label="ID">#{{ product.id }}</td>
               <td class="name-cell">{{ product.name }}</td>
               <td data-label="Categoría">{{ categoryLabel(product.category) }}</td>
               <td data-label="Precio">{{ product.price | arsCurrency }}</td>
