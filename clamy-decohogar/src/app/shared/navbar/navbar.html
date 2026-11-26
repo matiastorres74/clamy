@@ -14,13 +14,18 @@
     </button>
 
     @if (searchOpen()) {
-      <form class="topbar-search" (ngSubmit)="submitSearch()">
+      <!-- A plain form, not ngModel: the navbar is in the initial bundle on
+           every page, and FormsModule was the only thing pulling all of
+           @angular/forms into it. -->
+      <form class="topbar-search" role="search" (submit)="submitSearch($event)">
         <input
           #searchInput
           type="search"
-          [(ngModel)]="searchTerm"
+          [value]="searchTerm()"
+          (input)="searchTerm.set(searchInput.value)"
           name="search"
           placeholder="Buscar productos..."
+          aria-label="Buscar productos"
         />
       </form>
     }

@@ -10,14 +10,13 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../core/services/auth';
 import { CategoryService } from '../../core/services/category';
 import { CHRISTMAS_CATEGORY_ID, isChristmasSeason } from '../../core/season';
 
 @Component({
   selector: 'app-navbar',
-  imports: [RouterLink, RouterLinkActive, FormsModule],
+  imports: [RouterLink, RouterLinkActive],
   templateUrl: './navbar.html',
   styleUrl: './navbar.css',
 })
@@ -134,7 +133,10 @@ export class Navbar {
     }
   }
 
-  submitSearch(): void {
+  submitSearch(event: Event): void {
+    // Without FormsModule nothing stops the browser's own submit, which
+    // would reload the page with ?search= instead of routing.
+    event.preventDefault();
     const term = this.searchTerm().trim();
     if (!term) return;
     this.router.navigate(['/productos'], { queryParams: { search: term } });

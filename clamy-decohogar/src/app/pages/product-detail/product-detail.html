@@ -22,15 +22,31 @@
       >
         @if (images().length > 0) {
           <div class="gallery-stage">
-            <div #track class="gallery-track" (scroll)="onTrackScroll()">
+            <div
+              #track
+              class="gallery-track"
+              (scroll)="onTrackScroll()"
+              (pointerdown)="onTrackPointerDown()"
+              (wheel)="onTrackPointerDown()"
+            >
+              <!-- Only the photos next to the one on screen get an <img>:
+                   loading="lazy" does not hold back slides in a horizontal
+                   scroller, so a 12-photo product downloaded all twelve at
+                   once. The empty figures keep the scroll-snap width. -->
               @for (src of images(); track src; let i = $index) {
                 <figure class="gallery-slide" [attr.aria-hidden]="i !== activeIndex()">
-                  <img
-                    class="product-image"
-                    [src]="src"
-                    [alt]="p.name + ' — foto ' + (i + 1) + ' de ' + images().length"
-                    [attr.loading]="i === 0 ? 'eager' : 'lazy'"
-                  />
+                  @if (isSlideMounted(i)) {
+                    <img
+                      class="product-image"
+                      [src]="imageSrc(src, 1080)"
+                      [attr.srcset]="imageSrcset(src) || null"
+                      sizes="(width > 56.25em) 41rem, 100vw"
+                      [alt]="p.name + ' — foto ' + (i + 1) + ' de ' + images().length"
+                      [attr.fetchpriority]="i === 0 ? 'high' : null"
+                      [attr.loading]="i === 0 ? 'eager' : 'lazy'"
+                      decoding="async"
+                    />
+                  }
                 </figure>
               }
             </div>
@@ -88,7 +104,8 @@
                   [attr.aria-label]="'Ver foto ' + (i + 1)"
                   [attr.aria-current]="i === activeIndex() ? 'true' : null"
                 >
-                  <img [src]="src" alt="" loading="lazy" />
+                  <!-- 64x80 on screen: the 128px copy covers 2x screens. -->
+                  <img [src]="imageSrc(src, 128)" alt="" loading="lazy" decoding="async" />
                 </button>
               }
             </div>
