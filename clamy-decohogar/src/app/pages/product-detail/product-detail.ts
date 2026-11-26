@@ -112,16 +112,32 @@ export class ProductDetail implements OnInit {
     // the smooth scroll runs instead of after it lands.
     this.mountAround(next);
     if (el) {
+      this.scrollTarget = next;
       el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' });
     }
     this.activeIndex.set(next);
   }
 
+  // Set while goTo()'s smooth scroll is running. Its scroll events pass over
+  // every slide between start and target; mounting each of them meant that
+  // tapping the last thumbnail loaded all twelve photos.
+  private scrollTarget: number | null = null;
+
   onTrackScroll(): void {
     const el = this.track?.nativeElement;
     if (!el || el.clientWidth === 0) return;
     const index = Math.round(el.scrollLeft / el.clientWidth);
+    if (this.scrollTarget !== null) {
+      if (index !== this.scrollTarget) return;
+      this.scrollTarget = null;
+    }
     this.mountAround(index);
     this.activeIndex.set(index);
+  }
+
+  // A swipe that interrupts a smooth scroll never reaches its target, so the
+  // visitor's own scrolling takes over from here.
+  onTrackPointerDown(): void {
+    this.scrollTarget = null;
   }
 }

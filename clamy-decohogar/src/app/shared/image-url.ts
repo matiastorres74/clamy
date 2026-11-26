@@ -13,15 +13,18 @@ const QUALITY = 75;
 // is passed through untouched rather than turned into a URL that would fail.
 const OPTIMIZABLE_HOST = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
 
-function canOptimize(src: string): boolean {
-  // /_vercel/image only exists on Vercel. `ng serve` uses the development
-  // environment, so local work keeps loading the originals.
-  return environment.production && OPTIMIZABLE_HOST.test(src);
+// /_vercel/image only exists on Vercel. `ng serve` uses the development
+// environment, so local work keeps loading the originals. The `enabled`
+// parameters below exist for the spec; templates leave them at this default.
+const ON_VERCEL = environment.production;
+
+function canOptimize(src: string, enabled: boolean): boolean {
+  return enabled && OPTIMIZABLE_HOST.test(src);
 }
 
 /** One resized copy of `src`, for an image shown at a known pixel width. */
-export function imageSrc(src: string, width: ImageWidth): string {
-  if (!canOptimize(src)) return src;
+export function imageSrc(src: string, width: ImageWidth, enabled = ON_VERCEL): string {
+  if (!canOptimize(src, enabled)) return src;
   return `/_vercel/image?url=${encodeURIComponent(src)}&w=${width}&q=${QUALITY}`;
 }
 
@@ -30,9 +33,9 @@ export function imageSrc(src: string, width: ImageWidth): string {
  * smallest copy that covers the rendered size times the screen density.
  * Empty when the image cannot be optimized, which leaves `src` in charge.
  */
-export function imageSrcset(src: string, maxWidth: ImageWidth = 1600): string {
-  if (!canOptimize(src)) return '';
+export function imageSrcset(src: string, maxWidth: ImageWidth = 1600, enabled = ON_VERCEL): string {
+  if (!canOptimize(src, enabled)) return '';
   return IMAGE_WIDTHS.filter((w) => w <= maxWidth)
-    .map((w) => `${imageSrc(src, w)} ${w}w`)
+    .map((w) => `${imageSrc(src, w, enabled)} ${w}w`)
     .join(', ');
 }

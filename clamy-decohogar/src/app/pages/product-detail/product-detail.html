@@ -22,7 +22,13 @@
       >
         @if (images().length > 0) {
           <div class="gallery-stage">
-            <div #track class="gallery-track" (scroll)="onTrackScroll()">
+            <div
+              #track
+              class="gallery-track"
+              (scroll)="onTrackScroll()"
+              (pointerdown)="onTrackPointerDown()"
+              (wheel)="onTrackPointerDown()"
+            >
               <!-- Only the photos next to the one on screen get an <img>:
                    loading="lazy" does not hold back slides in a horizontal
                    scroller, so a 12-photo product downloaded all twelve at

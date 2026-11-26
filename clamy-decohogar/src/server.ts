@@ -10,6 +10,7 @@ import { join } from 'node:path';
 import { Category, Product } from './app/core/models/product.model';
 import { ROBOTS_TXT, buildSitemapXml } from './seo-files';
 import { applyScriptNonce, buildCsp, robotsTagFor } from './security-headers';
+import { apiCacheHeaders } from './api-cache-headers';
 import { randomBytes } from 'node:crypto';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
@@ -32,29 +33,16 @@ app.use(helmet({ contentSecurityPolicy: false }));
 const API_ORIGIN = process.env['API_ORIGIN'] || 'http://localhost:3001';
 const API_TIMEOUT_MS = 10_000;
 
-// Catalogue reads a visitor makes after the first page (opening a product,
-// changing a filter) crossed two functions and the database every time, at
-// ~450ms each. Anonymous answers are the same for everyone, so the CDN keeps
-// them for a minute and refreshes in the background after that. The admin's
-// requests carry a token and include prices: they are never stored, and
-// `Vary: Authorization` keeps them from being answered with the public copy.
-const CACHEABLE_API_PATH = /^\/(products(\/\d+)?|categories)\/?$/;
-const API_CDN_CACHE_CONTROL = 'max-age=60, stale-while-revalidate=604800';
-
+// What the CDN may keep is decided in api-cache-headers.ts.
 function setApiCacheHeaders(req: express.Request, res: express.Response, status: number): void {
-  const anonymous = !req.headers['authorization'];
-  const readOnly = req.method === 'GET' || req.method === 'HEAD';
-  if (readOnly && anonymous && status === 200 && CACHEABLE_API_PATH.test(req.path)) {
-    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
-    res.setHeader('Vercel-CDN-Cache-Control', API_CDN_CACHE_CONTROL);
-    // Appended, not set: the API already varies on Origin (CORS).
-    res.vary('Authorization');
-    // Lets the whole catalogue be purged at once (vercel cache invalidate
-    // --tag api-catalog) after a bulk change made outside the admin.
-    res.setHeader('Vercel-Cache-Tag', 'api-catalog');
-  } else {
-    res.setHeader('Cache-Control', 'private, no-store');
-  }
+  const { headers, varyOnAuthorization } = apiCacheHeaders({
+    method: req.method,
+    path: req.path,
+    hasAuthorization: Boolean(req.headers['authorization']),
+    status,
+  });
+  for (const [name, value] of Object.entries(headers)) res.setHeader(name, value);
+  if (varyOnAuthorization) res.vary('Authorization');
 }
 
 app.use('/api', async (req, res, next) => {
