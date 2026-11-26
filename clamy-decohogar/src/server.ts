@@ -32,6 +32,31 @@ app.use(helmet({ contentSecurityPolicy: false }));
 const API_ORIGIN = process.env['API_ORIGIN'] || 'http://localhost:3001';
 const API_TIMEOUT_MS = 10_000;
 
+// Catalogue reads a visitor makes after the first page (opening a product,
+// changing a filter) crossed two functions and the database every time, at
+// ~450ms each. Anonymous answers are the same for everyone, so the CDN keeps
+// them for a minute and refreshes in the background after that. The admin's
+// requests carry a token and include prices: they are never stored, and
+// `Vary: Authorization` keeps them from being answered with the public copy.
+const CACHEABLE_API_PATH = /^\/(products(\/\d+)?|categories)\/?$/;
+const API_CDN_CACHE_CONTROL = 'max-age=60, stale-while-revalidate=604800';
+
+function setApiCacheHeaders(req: express.Request, res: express.Response, status: number): void {
+  const anonymous = !req.headers['authorization'];
+  const readOnly = req.method === 'GET' || req.method === 'HEAD';
+  if (readOnly && anonymous && status === 200 && CACHEABLE_API_PATH.test(req.path)) {
+    res.setHeader('Cache-Control', 'public, max-age=0, must-revalidate');
+    res.setHeader('Vercel-CDN-Cache-Control', API_CDN_CACHE_CONTROL);
+    // Appended, not set: the API already varies on Origin (CORS).
+    res.vary('Authorization');
+    // Lets the whole catalogue be purged at once (vercel cache invalidate
+    // --tag api-catalog) after a bulk change made outside the admin.
+    res.setHeader('Vercel-Cache-Tag', 'api-catalog');
+  } else {
+    res.setHeader('Cache-Control', 'private, no-store');
+  }
+}
+
 app.use('/api', async (req, res, next) => {
   try {
     const chunks: Buffer[] = [];
@@ -60,6 +85,8 @@ app.use('/api', async (req, res, next) => {
         res.setHeader(key, value);
       }
     });
+    // After copying the API's headers, so its own Cache-Control does not win.
+    setApiCacheHeaders(req, res, upstream.status);
     res.send(Buffer.from(await upstream.arrayBuffer()));
   } catch (err) {
     if (err instanceof Error && err.name === 'TimeoutError') {
@@ -124,11 +151,14 @@ app.use(
  *
  * `stale-while-revalidate` is the part that matters on low traffic: once a page
  * is warm the CDN keeps serving it instantly and refreshes in the background,
- * so visitors stop paying the cold-start cost of waking this function.
+ * so visitors stop paying the cold-start cost of waking this function. A cold
+ * render costs ~4.7s (this function, the API's and Neon waking from
+ * scale-to-zero), so the stale window is a week: any page visited at least once
+ * a week is answered from the CDN, and the refresh happens behind it.
  *
  * Admin pages are client-rendered and user-specific, so they stay uncached.
  */
-const PAGE_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=86400';
+const PAGE_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=604800';
 
 // Vercel rewrites `Cache-Control` on framework-rendered responses to its own
 // `max-age=0, must-revalidate`, which is why setting that header alone left
@@ -136,7 +166,7 @@ const PAGE_CACHE_CONTROL = 'public, s-maxage=600, stale-while-revalidate=86400';
 // channel it does honour: the CDN consumes it and strips it before the browser
 // sees it, so the two headers together give us an edge cache without telling
 // browsers to hold a private copy of the page.
-const CDN_CACHE_CONTROL = 'max-age=600, stale-while-revalidate=86400';
+const CDN_CACHE_CONTROL = 'max-age=600, stale-while-revalidate=604800';
 
 // Only a real page (200) or a real "not found" (404) is shared through the
 // CDN. A redirect or a 503 rendered while the API was failing used to be

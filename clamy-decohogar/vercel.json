@@ -1,9 +1,21 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }],
+  "rewrites": [{ "source": "/((?!_vercel/).*)", "destination": "/api" }],
   "functions": {
     "api/index.ts": {
       "includeFiles": "dist/clamy-decohogar/**"
     }
+  },
+  "images": {
+    "sizes": [128, 384, 640, 1080, 1600],
+    "qualities": [75],
+    "formats": ["image/avif", "image/webp"],
+    "minimumCacheTTL": 2678400,
+    "remotePatterns": [
+      {
+        "protocol": "https",
+        "hostname": "uvqywscwnnj3k76q.public.blob.vercel-storage.com"
+      }
+    ]
   }
 }

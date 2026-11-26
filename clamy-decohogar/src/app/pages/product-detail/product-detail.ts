@@ -14,6 +14,7 @@ import { ProductService } from '../../core/services/product';
 import { Product } from '../../core/models/product.model';
 import { CategoryService } from '../../core/services/category';
 import { environment } from '../../../environments/environment';
+import { imageSrc, imageSrcset } from '../../shared/image-url';
 
 @Component({
   selector: 'app-product-detail',
@@ -37,6 +38,26 @@ export class ProductDetail implements OnInit {
 
   protected images = computed(() => this.product()?.images ?? []);
   protected activeIndex = signal(0);
+  protected imageSrc = imageSrc;
+  protected imageSrcset = imageSrcset;
+
+  // Slides that already have an <img>. A slide is mounted once the visitor
+  // reaches it or a neighbour, and stays mounted so swiping back never
+  // re-requests or flashes an empty frame.
+  private mountedSlides = signal<ReadonlySet<number>>(new Set([0, 1]));
+
+  protected isSlideMounted(index: number): boolean {
+    return this.mountedSlides().has(index);
+  }
+
+  private mountAround(index: number): void {
+    const total = this.images().length;
+    if (total === 0) return;
+    const wanted = [index, (index + 1) % total, (index - 1 + total) % total];
+    const current = this.mountedSlides();
+    if (wanted.every((i) => current.has(i))) return;
+    this.mountedSlides.set(new Set([...current, ...wanted]));
+  }
 
   // The inquiry opens WhatsApp with the product already named, so the shop
   // knows what the visitor is asking about without them retyping it. The id
@@ -87,6 +108,9 @@ export class ProductDetail implements OnInit {
     if (total === 0) return;
     const next = (index + total) % total;
     const el = this.track?.nativeElement;
+    // Mounted before scrolling, so the target photo is already loading while
+    // the smooth scroll runs instead of after it lands.
+    this.mountAround(next);
     if (el) {
       el.scrollTo({ left: next * el.clientWidth, behavior: 'smooth' });
     }
@@ -96,6 +120,8 @@ export class ProductDetail implements OnInit {
   onTrackScroll(): void {
     const el = this.track?.nativeElement;
     if (!el || el.clientWidth === 0) return;
-    this.activeIndex.set(Math.round(el.scrollLeft / el.clientWidth));
+    const index = Math.round(el.scrollLeft / el.clientWidth);
+    this.mountAround(index);
+    this.activeIndex.set(index);
   }
 }
