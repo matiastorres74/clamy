@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { slugify } from '../lib/categories';
+import { CacheTags, cached, expireTags } from '../lib/cache';
 import { requireAdmin } from '../middleware/requireAdmin';
 
 export const categoriesRouter = Router();
@@ -21,11 +22,15 @@ function isRecordNotFoundError(err: unknown): boolean {
   return err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025';
 }
 
+// Same list for every visitor and the admin alike (no private fields), so one
+// entry serves both. Every write below expires it.
 categoriesRouter.get('/', async (_req, res) => {
-  const categories = await prisma.category.findMany({
-    select: SELECT,
-    orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
-  });
+  const categories = await cached('categories:list', [CacheTags.categories], () =>
+    prisma.category.findMany({
+      select: SELECT,
+      orderBy: [{ position: 'asc' }, { createdAt: 'asc' }],
+    }),
+  );
   res.json(categories);
 });
 
@@ -50,6 +55,7 @@ categoriesRouter.post('/', requireAdmin, async (req, res) => {
     data: { id, label, position: (last._max.position ?? -1) + 1 },
     select: SELECT,
   });
+  await expireTags(CacheTags.categories);
   res.status(201).json(category);
 });
 
@@ -73,6 +79,7 @@ categoriesRouter.put('/order', requireAdmin, async (req, res) => {
     select: SELECT,
     orderBy: { position: 'asc' },
   });
+  await expireTags(CacheTags.categories);
   res.json(categories);
 });
 
@@ -88,6 +95,7 @@ categoriesRouter.put('/:id', requireAdmin, async (req, res) => {
       data: { label },
       select: SELECT,
     });
+    await expireTags(CacheTags.categories);
     res.json(category);
   } catch (err) {
     if (!isRecordNotFoundError(err)) throw err;
@@ -107,6 +115,7 @@ categoriesRouter.delete('/:id', requireAdmin, async (req, res) => {
   }
   try {
     await prisma.category.delete({ where: { id } });
+    await expireTags(CacheTags.categories);
     res.status(204).send();
   } catch (err) {
     if (!isRecordNotFoundError(err)) throw err;

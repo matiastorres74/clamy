@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { isValidCategory } from '../lib/categories';
+import { CacheTags, cached, expireTags } from '../lib/cache';
 import { AuthedRequest, optionalAdmin, requireAdmin } from '../middleware/requireAdmin';
 
 export const productsRouter = Router();
@@ -49,30 +50,51 @@ function parseLimit(raw: unknown): number | undefined {
   return Math.min(parsed, MAX_LIMIT);
 }
 
+// Category ids are slugs of at most 60 characters (see slugify), so anything
+// longer cannot match a product and is not worth a cache entry of its own.
+const MAX_CACHEABLE_CATEGORY_LENGTH = 60;
+
 productsRouter.get('/', optionalAdmin, async (req: AuthedRequest, res) => {
   const { category, search, featured } = req.query;
 
   const where: Record<string, unknown> = {};
-  if (typeof category === 'string' && category.length > 0) {
-    where.category = category;
+  const categoryFilter = typeof category === 'string' && category.length > 0 ? category : undefined;
+  if (categoryFilter) {
+    where.category = categoryFilter;
   }
-  if (typeof search === 'string' && search.trim().length > 0) {
-    where.id = { in: await findIdsMatchingName(search.trim()) };
+  const searchTerm = typeof search === 'string' ? search.trim() : '';
+  if (searchTerm.length > 0) {
+    where.id = { in: await findIdsMatchingName(searchTerm) };
   }
-  if (featured === 'true') {
-    where.featured = true;
-  } else if (featured === 'false') {
-    where.featured = false;
+  const featuredFilter = featured === 'true' ? true : featured === 'false' ? false : undefined;
+  if (featuredFilter !== undefined) {
+    where.featured = featuredFilter;
   }
 
   const take = parseLimit(req.query.limit);
 
-  const products = await prisma.product.findMany({
-    where,
-    orderBy: { createdAt: 'desc' },
-    ...(take === undefined ? {} : { take }),
-  });
-  res.json(products.map((product) => forViewer(product, req)));
+  const load = async () => {
+    const products = await prisma.product.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      ...(take === undefined ? {} : { take }),
+    });
+    return products.map((product) => forViewer(product, req));
+  };
+
+  // Only the anonymous view is shared: the admin's copy carries prices and
+  // must reflect their own edits immediately. Free-text searches are left out
+  // too, since every distinct term would become an entry that is rarely hit.
+  const cacheable =
+    !req.admin &&
+    searchTerm.length === 0 &&
+    (categoryFilter?.length ?? 0) <= MAX_CACHEABLE_CATEGORY_LENGTH;
+  if (!cacheable) {
+    return res.json(await load());
+  }
+
+  const key = `products:list:c=${categoryFilter ?? ''}|f=${featuredFilter ?? ''}|l=${take ?? ''}`;
+  res.json(await cached(key, [CacheTags.products], load));
 });
 
 productsRouter.get('/:id', optionalAdmin, async (req: AuthedRequest, res) => {
@@ -81,11 +103,17 @@ productsRouter.get('/:id', optionalAdmin, async (req: AuthedRequest, res) => {
     return res.status(400).json({ error: 'Invalid product id' });
   }
 
-  const product = await prisma.product.findUnique({ where: { id } });
+  const load = async () => {
+    const product = await prisma.product.findUnique({ where: { id } });
+    return product ? forViewer(product, req) : null;
+  };
+  const product = req.admin
+    ? await load()
+    : await cached(`products:item:${id}`, [CacheTags.products], load);
   if (!product) {
     return res.status(404).json({ error: 'Product not found' });
   }
-  res.json(forViewer(product, req));
+  res.json(product);
 });
 
 // Prisma's update/delete throw P2025 when the row doesn't exist. Any other
@@ -158,6 +186,7 @@ productsRouter.post('/', requireAdmin, async (req, res) => {
       featured: featured ?? false,
     },
   });
+  await expireTags(CacheTags.products);
   res.status(201).json(product);
 });
 
@@ -186,6 +215,7 @@ productsRouter.put('/:id', requireAdmin, async (req, res) => {
         featured: featured ?? false,
       },
     });
+    await expireTags(CacheTags.products);
     res.json(product);
   } catch (err) {
     if (!isRecordNotFoundError(err)) throw err;
@@ -201,6 +231,7 @@ productsRouter.delete('/:id', requireAdmin, async (req, res) => {
 
   try {
     await prisma.product.delete({ where: { id } });
+    await expireTags(CacheTags.products);
     res.status(204).send();
   } catch (err) {
     if (!isRecordNotFoundError(err)) throw err;
