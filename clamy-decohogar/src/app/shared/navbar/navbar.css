@@ -193,7 +193,7 @@
   /* visibility flips instantly when opening so the menu is focusable right
      away, and is delayed when closing so the fade-out stays visible. */
   transition: opacity 0.18s ease, transform 0.18s ease, visibility 0s linear 0.18s;
-  box-shadow: var(--glow);
+  box-shadow: var(--shadow-raised);
   z-index: 60;
 }
 

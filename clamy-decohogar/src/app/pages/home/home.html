@@ -39,10 +39,9 @@
     <app-snowfall />
   }
   <div class="hero-content container">
-    <span class="eyebrow">Rosario · Santa Fe · Argentina</span>
-    <h1 class="hero-title">Iluminación &amp; decoración<br /></h1>
+    <h1 class="hero-title">Iluminación y decoración</h1>
     <p class="hero-subtitle">
-      Lámparas, decoración, bazar, cocina y muebles. Envíos a todo el país.
+      Lámparas, decoración, bazar, cocina y muebles en Rosario, con envíos a todo el país.
     </p>
     <div class="hero-actions">
       <a class="btn btn-solid" routerLink="/productos">Ver catálogo</a>
@@ -72,7 +71,7 @@
   }
 
   <a class="hero-scroll" href="#categorias">
-    <span>Scroll</span>
+    <span>Categorías</span>
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
       <path d="M12 4v16m0 0l-6-6m6 6l6-6" stroke-linecap="round" stroke-linejoin="round" />
     </svg>
@@ -114,11 +113,19 @@
 
 <section id="categorias" class="container categories-section">
   <h2 class="section-title">Categorías</h2>
-  <div class="category-grid">
+  <!-- An index of large type with hairline rules rather than a row of
+       identical empty tiles: the names are the content, so they get the size,
+       and the list holds however many categories the admin creates. -->
+  <ul class="category-index">
     @for (cat of categories(); track cat.id) {
-      <a class="category-tile card" [routerLink]="['/productos']" [queryParams]="{ category: cat.id }">
-        <span class="category-tile-label">{{ cat.label }}</span>
-      </a>
+      <li>
+        <a class="category-link" [routerLink]="['/productos']" [queryParams]="{ category: cat.id }">
+          <span class="category-link-label">{{ cat.label }}</span>
+          <svg class="category-link-arrow" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M5 12h14m0 0l-6-6m6 6l-6 6" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      </li>
     }
-  </div>
+  </ul>
 </section>

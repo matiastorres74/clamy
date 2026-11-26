@@ -13,8 +13,9 @@
   --text-dim: #a6a6ac;
   --text-faint: #8f8f96;
   --danger: #ff8080;
-  --glow: 0 0 24px rgba(255, 255, 255, 0.12);
-  --glow-strong: 0 0 40px rgba(255, 255, 255, 0.22);
+  /* A dark, offset shadow, as if lit from above: on a near-black page a
+     white halo reads as decoration, a contact shadow reads as depth. */
+  --shadow-raised: 0 12px 32px -8px rgba(0, 0, 0, 0.7), 0 2px 6px rgba(0, 0, 0, 0.5);
   --radius: 2px;
 
   /* Sizes are in rem so they follow the reader's default font size, and
@@ -46,9 +47,7 @@ body {
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.05), transparent 60%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
@@ -140,7 +139,11 @@ img {
 .btn:hover {
   background: var(--text);
   color: var(--bg);
-  box-shadow: var(--glow-strong);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 3px;
 }
 
 .btn:disabled {
@@ -151,7 +154,6 @@ img {
 .btn:disabled:hover {
   background: transparent;
   color: var(--text);
-  box-shadow: none;
 }
 
 .btn-solid {
@@ -173,12 +175,11 @@ img {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+  transition: border-color 0.25s ease;
 }
 
-.card:hover {
+a.card:hover {
   border-color: var(--border-strong);
-  box-shadow: var(--glow);
 }
 
 input,
@@ -199,9 +200,11 @@ select {
 input:focus,
 textarea:focus,
 select:focus {
-  outline: none;
+  /* A solid ring instead of a soft glow: it is the only focus cue, so it
+     has to be unmistakable (WCAG 2.4.7). */
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
   border-color: var(--border-strong);
-  box-shadow: var(--glow);
 }
 
 label {

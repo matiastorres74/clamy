@@ -1,7 +1,6 @@
 <section class="container admin-page">
   <header class="admin-header">
     <div>
-      <span class="eyebrow">Panel privado</span>
       <h1 class="section-title">Administrar productos</h1>
     </div>
     <div class="admin-header-actions">
@@ -84,8 +83,8 @@
                   {{ totalImages() > 0 ? 'Agregar más fotos' : 'Elegir fotos' }}
                 </span>
                 <span class="uploader-hint" id="image-hint">
-                  Tocá para abrir la galería o la cámara · podés elegir varias · JPG, PNG, WEBP o
-                  GIF · hasta 5 MB cada una
+                  Tocá para abrir la galería o la cámara. Podés elegir varias fotos en JPG, PNG,
+                  WEBP o GIF, de hasta 5 MB cada una.
                 </span>
               </label>
 
@@ -120,7 +119,7 @@
                       <img [src]="entry.previewUrl" alt="" />
                       <div class="uploader-meta">
                         <span class="uploader-name">{{ entry.file.name }}</span>
-                        <span class="muted">{{ formatSize(entry.file.size) }} · nueva</span>
+                        <span class="muted">Nueva, {{ formatSize(entry.file.size) }}</span>
                         <div class="uploader-item-actions">
                           <button class="btn uploader-mini" type="button" (click)="removePending(i)">
                             Quitar
